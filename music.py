@@ -1,7 +1,6 @@
 #########
 # To do #
 #########
-#replace musicrecord. instead look for final folder name. eg for each file remotely, is there a folder with the same name locally?
 
 ################
 # Dependencies #

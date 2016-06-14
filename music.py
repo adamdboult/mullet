@@ -1,7 +1,3 @@
-#########
-# To do #
-#########
-
 ################
 # Dependencies #
 ################
@@ -15,22 +11,25 @@ import zipfile
 import tarfile
 import subprocess
 
-
 ########
 # Conf #
 ########
 from myConf import *
 
 dir = os.path.dirname(__file__)
-recordFile = os.path.join(dir, 'musicRecord.txt')
 ##########################
 # Get list of done files #
 ##########################
+
+os.chdir(destinationFolder)
+
+cmd = "find . -type d"
+procT = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+(out, err) = procT.communicate()
+out2 = out.split("\n")
 musicList = []
-with open(recordFile) as pathFile:
-    listTest = pathFile.readlines()
-    for listObj in listTest:
-        musicList.append(listObj.replace('\n',''))
+for myLine in out2:
+    musicList.append(myLine[2:])
 
 ##################
 # Unzip function #
@@ -142,31 +141,36 @@ fileList = []
 for fileEntry in fileListPre:
     fileList.append(fileEntry.replace('\n','')[2:])
 
+
 #####################
 # Loop through tree #
 #####################
 i = 0
 bitRate = 256
+#print ("T")
+#print (musicList)
 for fileObj in fileList:
-    if (fileObj in musicList):
+    filename, file_extension = os.path.splitext(fileObj)
+    print (filename)
+    if (filename in musicList):
         continue
 
     print ("Starting: " + fileObj)
     
-    print ("Folder Check")
-    folderCheck(prePathLocal, fileObj)
+    #print ("Folder Check")
+    #folderCheck(prePathLocal, fileObj)
 
-    print ("Copy file")
-    copyFile(fileObj, prePathLocal)
+    #print ("Copy file")
+    #copyFile(fileObj, prePathLocal)
 
-    print ("Unzip file")
-    unzipMusic(fileObj, prePathLocal)
+    #print ("Unzip file")
+    #unzipMusic(fileObj, prePathLocal)
 
-    print ("Flatten directory")
-    flattenDir(fileObj, prePathLocal)
+    #print ("Flatten directory")
+    #flattenDir(fileObj, prePathLocal)
     
-    print ("Convert files")
-    toMP3(fileObj, prePathLocal, bitRate)
+    #print ("Convert files")
+    #toMP3(fileObj, prePathLocal, bitRate)
 
-    updateLog(recordFile, fileObj)
-    print ("Done")
+    #updateLog(recordFile, fileObj)
+    #print ("Done")

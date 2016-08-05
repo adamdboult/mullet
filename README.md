@@ -1,2 +1,2 @@
 # Readme
-Converts remote FLAC files to compressed files. Uses configuration myConf.py.
+Usage: python3 myConf.json

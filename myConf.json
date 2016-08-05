@@ -1,0 +1,40 @@
+{
+    "sourceHost": "adam@192.168.11.236",
+    "sourceFolder": "/mnt/sdb1/FLAC/",
+    "destHost": "localhost",
+    "destFolder": "/home/adam/ownCloud/Music/",
+    "bitRate": 256,
+    "functionArray": [
+	{
+	    "name": "unZip",
+	    "args": [
+		"sourceFile"
+	    ]
+	},
+	{
+	    "name": "toMP3",
+	    "args": [
+		"sourceFile"
+	    ]
+	},
+	{
+	    "name": "toDest",
+	    "args": [
+		"sourceFile",
+		"destFolder",
+		"destHost"
+	    ]
+	}
+    ],
+    "toTempCriteria":{
+	"typeMatch": "d"
+    },
+    "toDestCriteria":[
+
+    ],
+    "allowedExtensions":[
+	".mp3",
+	".jpg",
+	".m4a"
+    ]
+}

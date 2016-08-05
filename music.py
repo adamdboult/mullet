@@ -1,8 +1,3 @@
-################
-# Dependencies #
-################
-#ffmpeg
-
 ##########
 # Import #
 ##########
@@ -10,170 +5,57 @@ import os
 import zipfile
 import tarfile
 import subprocess
+import shutil
+import re
+import subprocess
+import json
+import sys
+import tempfile
 
 ########
 # Conf #
 ########
-from myConf import *
-
+localhost = "localhost"
 dir = os.path.dirname(os.path.realpath(__file__))
-#dir = os.path.dirname(__file__)
-##########################
-# Get list of done files #
-##########################
 
-os.chdir(destinationFolder)
+inputPath = sys.argv[1]
+with open(inputPath) as data_file:
+    data = json.load(data_file)
 
-cmd = "find . -type d"
-procT = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-(out, err) = procT.communicate()
-out2 = out.split("\n")
-musicList = []
-for myLine in out2:
-    musicList.append(myLine[2:])
-
-##################
-# Unzip function #
-##################
-def unzipMusic(fileObj, prePathLocal):
-    filename, file_extension = os.path.splitext(fileObj)
-    folderPath = os.path.dirname(prePathLocal + filename + "/")
-    filePath = folderPath + "/" + os.path.basename(folderPath) + file_extension
-    os.chdir(folderPath)
-    if (filePath.endswith(".zip")):
-        print ("Using zip")
-        fh = open(filePath, 'rb')
-        z = zipfile.ZipFile(fh)
-        for name in z.namelist():
-            outpath = folderPath
-            z.extract(name, outpath)
-        fh.close()
-
-    elif (filePath.endswith("tar.gz")):
-        print ("Using tar.gz")
-        tar =  tarfile.open(filePath, "r:gz")
-        tar.extractall()
-        tar.close()
-
-    elif (filePath.endswith("tar")):
-        print ("Using tar")
-        tar =  tarfile.open(filePath, "r:")
-        tar.extractall()
-        tar.close()
-
-    else:
-        print ("Using other")
-
-########################
-# Ensure folders exist #
-########################
-def folderCheck(prePathLocal, fileObj):
-    filename, file_extension = os.path.splitext(fileObj)
-    folderPath = os.path.dirname(prePathLocal + filename + "/")
-    print ("making: "+folderPath)
-    ### Local folders
-    if not os.path.exists(folderPath):
-        print ("a")
-        os.makedirs(folderPath)
+sourceHost    = data["sourceHost"]
+sourceFolder  = data["sourceFolder"]
+destHost      = data["destHost"]
+destFolder    = data["destFolder"]
+functionArray = data["functionArray"]
 
 #############
-# Copy file #
+# Functions #
 #############
-def copyFile(fileObj, prePathLocal):
-    print (sourceFolder)
-    filename, file_extension = os.path.splitext(fileObj)
-    folderPath = os.path.dirname(prePathLocal + filename + "/")
-    filePath = folderPath + "/" + os.path.basename(folderPath) + file_extension
-    print (sourceFolder)
-    os.chdir(folderPath)
-    print (sourceFolder)
-    remotePath = sourceFolder + fileObj
-    print ("RMP: "+remotePath)
-    print ("sou: "+sourceFolder)
-    print ("PAT:"+ filePath)
-    remotePath = remotePath.replace(" ", "\ ").replace("(", "\(").replace(")","\)").replace("|", "\|")
-    filePath=filePath.replace(" ", "\ ").replace("(", "\(").replace(")","\)").replace("|", "\|")
-    systemScript = 'rsync -avz '+HOST+'":'+remotePath + '" ' + filePath
-    print (systemScript)
-    os.system(systemScript)
-
-##################
-# Convert to MP3 #
-##################
-def toMP3(fileObj, prePathLocal, bitRate):
-    filename, file_extension = os.path.splitext(fileObj)
-    folderPath = os.path.dirname(prePathLocal + filename + "/")
-    filePath = folderPath + "/" + os.path.basename(folderPath) + file_extension
-    os.chdir(folderPath)
-    print ("IN: "+folderPath)
-    toMp3Path = os.path.join(dir, 'tomp3.sh')
-    print ("here" + toMp3Path)
-    subprocess.call(toMp3Path)
-    print ("there")
-    systemScript = 'find . -name "*.flac" -type f -delete; find . -name "*.gz" -type f -delete; find . -name "*.zip" -type f -delete; find . -name "*.tar" -type f -delete'
-    os.system(systemScript)
-    
-    systemScript = 'rsync -a ' + prePathLocal + '* ' + destinationFolder
-    print (systemScript)
-    os.system(systemScript)
-
-#####################
-# Flatten directory #
-#####################
-def flattenDir(fileObj, prePathLocal):
-    filename, file_extension = os.path.splitext(fileObj)
-    folderPath = os.path.dirname(prePathLocal + filename + "/")
-    filePath = folderPath + "/" + os.path.basename(folderPath) + file_extension
-    systemScript = 'find ./ -mindepth 2 -type f -exec mv -i "{}" ./ ";"'#;find -mindepth 1 -maxdepth 1 -type d -exec rm -r {} \;'
-    os.chdir(folderPath)
-    print (folderPath)
-    os.system(systemScript)
-    systemScript = 'rm -r */'
-    os.chdir(folderPath)
-    print ("Running: " + systemScript)
-    os.system(systemScript)
-    
-#############
-# Call tree #
-#############
-COMMAND = "cd " + sourceFolder + "; find . -type f"
-ssh = subprocess.Popen(["ssh", "%s" % HOST, COMMAND],
-                       shell=False,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
-
-fileListPre = ssh.stdout.readlines()
-fileList = []
-for fileEntry in fileListPre:
-    fileList.append(fileEntry.replace('\n','')[2:])
-
+from myFuncs import *
 
 #####################
 # Loop through tree #
 #####################
-i = 0
-bitRate = 256
-#print ("T")
-print (musicList)
-for fileObj in fileList:
-    filename, file_extension = os.path.splitext(fileObj)
-    #print (filename)
-    if (filename in musicList):
+matchType = data["toTempCriteria"]["typeMatch"]
+destList   = getFolderContents(matchType, destFolder, destHost)
+sourceList = getFolderContents("f", sourceFolder, sourceHost)
+print ("dest list")
+#print (destList)
+for sourceFile in sourceList:
+    #print (sourceFile)
+    filename, file_extension = os.path.splitext(sourceFile)
+    if (filename in destList):
         continue
 
-    print ("Starting: " + fileObj)
-    
-    print ("Folder Check")
-    folderCheck(prePathLocal, fileObj)
+    print ("Copying: " + sourceFile)
+    toTemp(sourceFile, sourceFolder, sourceHost)
 
-    print ("Copy file")
-    copyFile(fileObj, prePathLocal)
+    for entry in functionArray:
+        print ("Process: ", entry["name"])
+        functionArgs = []
+        for arg in entry["args"]:
+            functionArgs.append(globals()[arg])
+        globals()[entry["name"]](*functionArgs)
 
-    print ("Unzip file")
-    unzipMusic(fileObj, prePathLocal)
-
-    print ("Flatten directory")
-    flattenDir(fileObj, prePathLocal)
-    
-    print ("Convert files")
-    toMP3(fileObj, prePathLocal, bitRate)
+closeTemp()
+print ("done")

@@ -1,0 +1,121 @@
+{
+    "sourceHost": "localhost",
+    "sourceFolder": "/home/adam/ownCloud/PC/scripts/infrastructure/laptop/private/hosts/",
+    "destHost": "localhost",
+    "destFolder": "/etc/",
+    "toTempLimit": 0,
+    "functionArray": [
+	{
+	    "name": "newFile",
+	    "args": [
+		"'hosts'"
+	    ]
+	},
+	{
+	    "name": "writeValue",
+	    "args": [
+		"'sockets.txt'"
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'hostsStart.txt'",
+		"'hosts'",
+		0,
+		0
+	    ]
+	},
+	{
+	    "name": "newFile",
+	    "args": [
+		"'blockRoot.txt'"
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'lists/hostsInput.txt'",
+		"'blockRoot.txt'",
+		0,
+		0
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'lists/rlwpx.txt'",
+		"'blockRoot.txt'",
+		2,
+		10
+	    ]
+	},
+	{
+	    "name": "filterFile",
+	    "args": [
+		"'blockRoot.txt'",
+		"'whiteList.txt'",
+		"'blockRootFilter.txt'"
+	    ]
+	},
+	{
+	    "name": "expandFile",
+	    "args": [
+		"'blockRootFilter.txt'",
+		"'preLists/hostsPre.txt'",
+		"'hostsBody.txt'"
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'sockets.txt'",
+		"'hostsBody.txt'",
+		0,
+		0
+	    ]
+	},
+	{
+	    "name": "expandFile",
+	    "args": [
+		"'hostsBody.txt'",
+		"'preLists/ip.txt'",
+		"'hostsBodyFull.txt'"
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'hostsBodyFull.txt'",
+		"'hosts'",
+		0,
+		0
+	    ]
+	},
+	{
+	    "name": "appendFile",
+	    "args": [
+		"'hostsEnd.txt'",
+		"'hosts'",
+		0,
+		0
+	    ]
+	},
+	{
+	    "name": "toDest",
+	    "args": [
+		"destFolder",
+		"destHost",
+		"toDestCriteria"
+	    ]
+	}
+    ],
+    "toTempCriteria":{
+	"typeMatch": 0
+    },
+    "toDestCriteria":[
+	"^hosts$"
+    ],
+    "allowedExtensions":[
+    ]
+}

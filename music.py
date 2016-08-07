@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##########
 # Import #
 ##########
@@ -27,35 +28,91 @@ sourceFolder  = data["sourceFolder"]
 destHost      = data["destHost"]
 destFolder    = data["destFolder"]
 functionArray = data["functionArray"]
+toTempLimit   = data["toTempLimit"]
+toDestCriteria   = data["toDestCriteria"]
 
 #############
 # Functions #
 #############
 from myFuncs import *
 
+########################
+# What to copy to temp #
+########################
+
+matchType = data["toTempCriteria"]["typeMatch"]
+
+if (matchType == 0):
+    destList = []
+else:
+    destList = getFolderContents(matchType, destFolder, destHost)
+
+sourceList = getFolderContents("f", sourceFolder, sourceHost)
+
 #####################
 # Loop through tree #
 #####################
-matchType = data["toTempCriteria"]["typeMatch"]
-destList   = getFolderContents(matchType, destFolder, destHost)
-sourceList = getFolderContents("f", sourceFolder, sourceHost)
-print ("dest list")
-#print (destList)
+copyArraySub = []
+toTempArray = []
 for sourceFile in sourceList:
-    #print (sourceFile)
-    filename, file_extension = os.path.splitext(sourceFile)
-    if (filename in destList):
-        continue
+    if (matchType == "d"):
+        filename, file_extension = os.path.splitext(sourceFile)
+        if (filename in destList):
+            continue
+    elif (matchType == "f"):
+        if (sourceFile in destList):
+            continue
+        
+    copyArraySub.append(sourceFile)
+    if (len(copyArraySub) == toTempLimit):
+        toTempArray.append(copyArraySub)
+        copyArraySub=[]
 
-    print ("Copying: " + sourceFile)
-    toTemp(sourceFile, sourceFolder, sourceHost)
+if (len(copyArraySub) > 0 ):
+    toTempArray.append(copyArraySub)
 
+for copyArraySub in toTempArray:
+    for sourceFile in copyArraySub:
+        print ("Copying: " + sourceFile)
+        toTemp(sourceFile, sourceFolder, sourceHost)
+        
     for entry in functionArray:
         print ("Process: ", entry["name"])
         functionArgs = []
         for arg in entry["args"]:
-            functionArgs.append(globals()[arg])
+            if (isinstance(arg, int)):
+                newF = arg
+            elif (arg[0] == "'" or arg[0] == '"'):
+                newF = arg[1:-1]
+            else:
+                newF = globals()[arg]
+            functionArgs.append(newF)
         globals()[entry["name"]](*functionArgs)
 
-closeTemp()
+        ## empty temp folder
+
+##########
+# Finish #
+##########
+#closeTemp()
 print ("done")
+
+###
+# other
+###
+# test with an album
+
+
+
+# split out myFuncs, basic, packages, import all from one folder
+
+
+
+###
+# deploy
+###
+
+# run command against each line (give command, file to func; can do install)
+# also for uninstall
+# also for git clone
+# copy, set up mod and own

@@ -3,26 +3,25 @@
     "sourceFolder": "/mnt/sdb1/FLAC/",
     "destHost": "localhost",
     "destFolder": "/home/adam/ownCloud/Music/",
-    "bitRate": 256,
+    "toTempLimit": 1,
     "functionArray": [
 	{
 	    "name": "unZip",
 	    "args": [
-		"sourceFile"
 	    ]
 	},
 	{
 	    "name": "toMP3",
 	    "args": [
-		"sourceFile"
+		256
 	    ]
 	},
 	{
 	    "name": "toDest",
 	    "args": [
-		"sourceFile",
 		"destFolder",
-		"destHost"
+		"destHost",
+		"toDestCriteria"
 	    ]
 	}
     ],
@@ -30,8 +29,10 @@
 	"typeMatch": "d"
     },
     "toDestCriteria":[
-
     ],
+    "regexArray":[
+	"^hosts$"
+    ]
     "allowedExtensions":[
 	".mp3",
 	".jpg",

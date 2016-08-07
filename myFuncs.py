@@ -11,6 +11,7 @@ import subprocess
 import json
 import sys
 import tempfile
+import socket
 
 localhost = "localhost"
 
@@ -49,45 +50,36 @@ def getFolderContents(fileOrFolder, folder, host):
 #####################
 def toTemp(sourceFile, sourceFolder, sourceHost):
     filename, file_extension = os.path.splitext(sourceFile)
-    tempPath = os.path.join(tempFolder, filename)
-
+    
     sourcePath = os.path.join(sourceFolder, sourceFile)
-
-    tempString = os.path.join(tempPath, os.path.basename(sourceFile))
+    tempPath   = os.path.join(tempFolder, sourceFile)
+    
+    tempString = '"' + tempPath + '"'
     sourceString = sourceHost + ':"' + sourcePath + '"'
     if (sourceHost == localhost):
         sourceString = '"' + sourcePath + '"'
 
-    systemScript = 'rsync -avz --protect-args '+ sourceString + ' "' + tempString + '"'
-    print (systemScript)
-    os.makedirs(tempPath, exist_ok=True)
-    os.chdir(tempPath)
+    systemScript = 'rsync -avz --protect-args '+ sourceString + ' ' + tempString
+
+    makeDir = os.path.dirname(tempPath)
+    try:
+        os.stat(makeDir)
+    except:
+        os.makedirs(makeDir)
     os.system(systemScript)
     
 ##################
 # Unzip function #
 ##################
-def unZip(sourceFile):
-
-    filename, file_extension = os.path.splitext(sourceFile)
-    
-    tempPath = os.path.join(tempFolder, filename)
-
-    folderContents = getFolderContents("f", tempPath, localhost)
+def unZip():
+    folderContents = getFolderContents("f", tempFolder, localhost)
     for folderContent in folderContents:
-        filename, file_extension = os.path.splitext(folderContent)
-        if (filename[0]=="/"):
-            filename = filename[1:]
+        #filename, file_extension = os.path.splitext(folderContent)
+        #if (filename[0]=="/"):
+        #    filename = filename[1:]
 
-        folderPath = os.path.join(tempPath)
-        print ("HERE")
-        print (tempPath)
-        print (filename)
-        print (folderPath)
-        print(os.path.basename(folderPath))
-        print (file_extension)
-        filePath = os.path.join(folderPath, os.path.basename(folderPath) + file_extension)
-        os.chdir(tempPath)
+        filePath = os.path.join(tempFolder, folderContent)
+        os.chdir(tempFolder)
         if (filePath.endswith(".zip")):
             print ("Using zip")
             fh = open(filePath, 'rb')
@@ -111,7 +103,7 @@ def unZip(sourceFile):
 
         else:
             print ("Using other")
-    print ("zippy")
+
 #################
 # Escape string #
 #################
@@ -119,81 +111,130 @@ def unZip(sourceFile):
 #    outputString = inputString.replace(" ", "\ ").replace("(", "\(").replace(")","\)").replace("|", "\|").replace("\n","")
 #    return outputString
 
+###############
+# Create file #
+###############
+def newFile(path):
+    newPath = os.path.join(tempFolder, path)
+    open(newPath, "w").close()
+
+###############
+# Expand file #
+###############
+def expandFile(rawPath, expandPath, writePath):
+    rawPath = os.path.join(tempFolder, rawPath)
+    expandPath = os.path.join(tempFolder, expandPath)
+    writePath = os.path.join(tempFolder, writePath)
+    with open (writePath, "w") as outFile:
+        with open (rawPath) as rawFile:
+            with open (expandPath) as expandFile:
+                expandLines = expandFile.read().splitlines()
+                for rawLine in rawFile:
+                    for expandLine in expandLines:
+                        outFile.write(expandLine.replace("\n","") + rawLine)
+
+###############
+# Write value #
+###############
+def writeValue(writePath):
+    writePath = os.path.join(tempFolder, writePath)
+    with open (writePath, "w") as outFile:
+        rawLine = socket.gethostname()
+        outFile.write(rawLine)
+                        
+###############
+# Filter file #
+###############
+def filterFile(rawPath, filterPath, writePath):
+    rawPath = os.path.join(tempFolder, rawPath)
+    filterPath = os.path.join(tempFolder, filterPath)
+    writePath = os.path.join(tempFolder, writePath)
+    with open (writePath, "w") as outFile:
+        with open (rawPath) as rawFile:
+            with open (filterPath) as filterFile:
+                filterLines = filterFile.read().splitlines()
+                for rawLine in rawFile:
+                    write = 1
+                    for filterLine in filterLines:
+                        if (filterLine.strip() == rawLine.strip()):
+                            write = 0
+                    if (write == 1):
+                        outFile.write(rawLine)
+
+###############
+# Append file #
+###############
+def appendFile(readPath, writePath, skipRow, skipCol):
+    readPath = os.path.join(tempFolder, readPath)
+    writePath = os.path.join(tempFolder, writePath)
+    with open (writePath, "a") as outfile:
+        with open (readPath) as infile:
+            row = 0
+            for line in infile:
+                if (row >= skipRow):
+                    outfile.write(line[skipCol:])
+                row += 1
+
 ##################
 # Convert to MP3 #
 ##################
-def toMP3(sourceFile):
-    print ("tompy3")
-    bitRate = data["bitRate"]
-
-    filename, file_extension = os.path.splitext(sourceFile)
-    
-    tempPath = os.path.join(tempFolder, filename)
-
-    folderContents = getFolderContents("f", tempPath, localhost)
+def toMP3(bitrate):
+    folderContents = getFolderContents("f", tempFolder, localhost)
     for folderContent in folderContents:
         filename, file_extension = os.path.splitext(folderContent)
         if (filename[0]=="/"):
             filename = filename[1:]
 
         folderPath = os.path.join(tempPath, filename)
-        print ("AA")
-        print (folderPath)
-        print (filename)
-        print (file_extension)
-        print (os.path.basename(folderPath))
         filePath = os.path.join(folderPath + file_extension)
         destPath = os.path.join(folderPath + ".mp3")
         if (filePath.endswith("flac")):
-            #commandArray=[]
-            #commandArray.append('ffmpeg')
-            #commandArray.append('-i')
-            #commandArray.append('"' + filePath + '"')
-            #commandArray.append('-qscale:a')
-            #commandArray.append("2")
-            #commandArray.append('"' + destPath + '"')
 
             systemScript = 'ffmpeg -i ' + filePath + ' -qscale:a 2 ' + destPath
             print (systemScript)
             os.system(systemScript)
-            #print (commandArray)
-            #ssh = subprocess.Popen(commandArray,
-            #               shell = False,
-            #               stdout = subprocess.PIPE,
-            #               stderr = subprocess.PIPE)
-            #results = ssh.stdout.readlines()
 
 #######################
 # Copy to destination #
 #######################
-def toDest(sourceFile, destFolder, destHost):
+def toDest(destFolder, destHost, regexArray):
     confLines = data["toDestCriteria"]
     allowedExtensions = data["allowedExtensions"]
-
-    filename, file_extension = os.path.splitext(sourceFile)
     
-    tempPath = os.path.join(tempFolder, filename)
-    destPathRoot = os.path.join(destFolder, filename)
-    
-    tempFiles = getFolderContents("f", tempPath, localhost)
+    tempFiles = getFolderContents("f", tempFolder, localhost)
     matchFileArray = []
+    print ("TTT")
+    print (tempFiles)
     for tempFile in tempFiles:
         if (tempFile[0]=="/"):
             tempFile = tempFile[1:]
 
         filename, file_extension = os.path.splitext(tempFile)
-        if file_extension in allowedExtensions:
-            if tempFile not in matchFileArray:
+        if (
+                len(allowedExtensions) == 0 or
+                file_extension in allowedExtensions
+        ):
+            if (len(regexArray) == 0):
                 matchFileArray.append(tempFile)
+            else:
+                thisMatch = 0
+                for regex in regexArray:
+                    pattern = re.compile(regex)
+                    if (pattern.match(tempFile)):
+                        thisMatch = 1
+                if (thisMatch == 1):
+                    matchFileArray.append(tempFile)
+
+    print (matchFileArray)
     for matchFile in matchFileArray:
         filename, file_extension = os.path.splitext(matchFile)
 
-        destPath = os.path.join(destPathRoot, matchFile)
+        destPath = os.path.join(destFolder, matchFile)
         destString = '"' + destHost + ':' + destPath + '"'
         if (destHost == localhost):
             destString = '"' + destPath + '"'
 
-        tempString = '"' + os.path.join(tempPath, matchFile) + '"'
+        tempString = '"' + os.path.join(tempFolder, matchFile) + '"'
 
         commandArray = ["ssh", "%s" % destHost]
         if (destHost == localhost):
@@ -215,4 +256,4 @@ def toDest(sourceFile, destFolder, destHost):
 # ... do stuff with dirpath
 def closeTemp():
     print("by")
-    #shutil.rmtree(tempFolder)
+    shutil.rmtree(tempFolder)

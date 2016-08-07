@@ -6,12 +6,6 @@
     "toTempLimit": 0,
     "functionArray": [
 	{
-	    "name": "newFile",
-	    "args": [
-		"'hosts'"
-	    ]
-	},
-	{
 	    "name": "writeValue",
 	    "args": [
 		"'sockets.txt'"

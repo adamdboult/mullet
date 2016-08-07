@@ -16,7 +16,7 @@ import tempfile
 ########
 # Conf #
 ########
-localhost = "localhost"
+#localhost = "localhost"
 dir = os.path.dirname(os.path.realpath(__file__))
 
 inputPath = sys.argv[1]
@@ -100,6 +100,12 @@ print ("done")
 ###
 # other
 ###
+
+# to temp, to dest merge
+# send filters across
+
+# append and new file merge
+
 # test with an album
 
 

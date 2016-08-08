@@ -3,12 +3,7 @@
 # Import #
 ##########
 import os
-import zipfile
-import tarfile
-import subprocess
 import shutil
-import re
-import subprocess
 import json
 import sys
 import tempfile
@@ -23,31 +18,24 @@ inputPath = sys.argv[1]
 with open(inputPath) as data_file:
     data = json.load(data_file)
 
-sourceHost    = data["sourceHost"]
-sourceFolder  = data["sourceFolder"]
-destHost      = data["destHost"]
-destFolder    = data["destFolder"]
-functionArray = data["functionArray"]
-toTempLimit   = data["toTempLimit"]
-toDestCriteria   = data["toDestCriteria"]
+data["localhost"] = "localhost"
 
 #############
 # Functions #
 #############
-from myFuncs import *
+from basicFuncs import *
+from moreFuncs import *
 
 ########################
 # What to copy to temp #
 ########################
 
-matchType = data["toTempCriteria"]["typeMatch"]
-
-if (matchType == 0):
+if (data["toTempCriteria"]["typeMatch"] == 0):
     destList = []
 else:
-    destList = getFolderContents(matchType, destFolder, destHost)
+    destList = getFolderContents(data["toTempCriteria"]["typeMatch"], data["destFolder"], data["destHost"])
 
-sourceList = getFolderContents("f", sourceFolder, sourceHost)
+sourceList = getFolderContents("f", data["sourceFolder"], data["sourceHost"])
 
 #####################
 # Loop through tree #
@@ -55,16 +43,16 @@ sourceList = getFolderContents("f", sourceFolder, sourceHost)
 copyArraySub = []
 toTempArray = []
 for sourceFile in sourceList:
-    if (matchType == "d"):
+    if (data["toTempCriteria"]["typeMatch"] == "d"):
         filename, file_extension = os.path.splitext(sourceFile)
         if (filename in destList):
             continue
-    elif (matchType == "f"):
+    elif (data["toTempCriteria"]["typeMatch"] == "f"):
         if (sourceFile in destList):
             continue
         
     copyArraySub.append(sourceFile)
-    if (len(copyArraySub) == toTempLimit):
+    if (len(copyArraySub) == data["toTempLimit"]):
         toTempArray.append(copyArraySub)
         copyArraySub=[]
 
@@ -72,15 +60,17 @@ if (len(copyArraySub) > 0 ):
     toTempArray.append(copyArraySub)
 
 for copyArraySub in toTempArray:
+    data["tempFolder"] = tempfile.mkdtemp()
     for sourceFile in copyArraySub:
         print ("Copying: " + sourceFile)
-        toTemp(sourceFile, sourceFolder, sourceHost)
+        toTemp(data, sourceFile)
         
-    for entry in functionArray:
+    for entry in data["functionArray"]:
         print ("Process: ", entry["name"])
-        functionArgs = []
+        functionArgs = [data]
         for arg in entry["args"]:
-            if (isinstance(arg, int)):
+            print ("----------")
+            if (type(arg) in [list, int]):
                 newF = arg
             elif (arg[0] == "'" or arg[0] == '"'):
                 newF = arg[1:-1]
@@ -89,36 +79,39 @@ for copyArraySub in toTempArray:
             functionArgs.append(newF)
         globals()[entry["name"]](*functionArgs)
 
-        ## empty temp folder
+    shutil.rmtree(data["tempFolder"])
 
 ##########
 # Finish #
 ##########
-#closeTemp()
 print ("done")
+
 
 ###
 # other
 ###
 
-# to temp, to dest merge
-# send filters across
-
-# append and new file merge
-
 # test with an album
 
-
-
-# split out myFuncs, basic, packages, import all from one folder
-
-
-
-###
-# deploy
-###
-
-# run command against each line (give command, file to func; can do install)
-# also for uninstall
-# also for git clone
 # copy, set up mod and own
+# unzip down with command line
+### ownquant
+#mergeall quant
+#copy all across to temp
+#for each .conf, concatenate all files in directory
+#for each of the concatenated, extract rows, cols
+#call gnuplot
+#copy gnuplots across to me
+##*** filter deploy
+#filter copy, use existing conf but replace whitespace with copies. should work
+##*** system depoy
+###**** easy
+#install
+#remove
+#copy
+#git clone if not exist
+###**** other
+#authkeys
+#knowns hosts
+#import gnupg public
+#import gnpg private

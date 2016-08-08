@@ -13,29 +13,23 @@
 	{
 	    "name": "toMP3",
 	    "args": [
-		256
+		".flac",
+		["'ffmpeg -i '", "filePath", "' -qscale:a 2 '", "folderPath", "'.mp3'"]
 	    ]
 	},
 	{
 	    "name": "toDest",
 	    "args": [
-		"destFolder",
-		"destHost",
-		"toDestCriteria"
+		"^hosts$"
 	    ]
 	}
     ],
     "toTempCriteria":{
-	"typeMatch": "d"
-    },
-    "toDestCriteria":[
-    ],
-    "regexArray":[
-	"^hosts$"
-    ]
-    "allowedExtensions":[
-	".mp3",
-	".jpg",
-	".m4a"
-    ]
+	"typeMatch": "d",
+	"allowedExtensions":[
+	    ".mp3",
+	    ".jpg",
+	    ".m4a"
+	]
+    }
 }

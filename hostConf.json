@@ -21,12 +21,6 @@
 	    ]
 	},
 	{
-	    "name": "newFile",
-	    "args": [
-		"'blockRoot.txt'"
-	    ]
-	},
-	{
 	    "name": "appendFile",
 	    "args": [
 		"'lists/hostsInput.txt'",
@@ -98,18 +92,15 @@
 	{
 	    "name": "toDest",
 	    "args": [
-		"destFolder",
-		"destHost",
-		"toDestCriteria"
+		[
+		    "^hosts$"
+		]
 	    ]
 	}
     ],
     "toTempCriteria":{
-	"typeMatch": 0
-    },
-    "toDestCriteria":[
-	"^hosts$"
-    ],
-    "allowedExtensions":[
-    ]
+	"typeMatch": 0,
+	"allowedExtensions":[
+	]
+    }
 }

@@ -2,32 +2,15 @@
 # Import #
 ##########
 import os
-import zipfile
-import tarfile
-import subprocess
-import shutil
 import re
 import subprocess
-import json
-import sys
-import tempfile
-import socket
-
-localhost = "localhost"
-
-#inputPath = sys.argv[1]
-
-#with open(inputPath) as data_file:
-#    data = json.load(data_file)
-
-tempFolder = tempfile.mkdtemp()
 
 #######################
 # Get folder contents #
 #######################
 def getFolderContents(fileOrFolder, folder, host):
     commandArray = ["ssh", "%s" % host]
-    if (host == localhost):
+    if (host == "localhost"):
         commandArray=[]
     commandArray.append("find")
     commandArray.append(folder)
@@ -49,7 +32,11 @@ def getFolderContents(fileOrFolder, folder, host):
 #####################
 # Copy file to temp #
 #####################
-def toTemp(sourceFile, sourceFolder, sourceHost):
+def toTemp(data, sourceFile):
+    print (data)
+    sourceFolder = data["sourceFolder"]
+    sourceHost = data["sourceHost"]
+    tempFolder = data["tempFolder"]
     filename, file_extension = os.path.splitext(sourceFile)
     
     sourcePath = os.path.join(sourceFolder, sourceFile)
@@ -57,7 +44,7 @@ def toTemp(sourceFile, sourceFolder, sourceHost):
     
     tempString = '"' + tempPath + '"'
     sourceString = sourceHost + ':"' + sourcePath + '"'
-    if (sourceHost == localhost):
+    if (sourceHost == "localhost"):
         sourceString = '"' + sourcePath + '"'
 
     systemScript = 'rsync -avz --protect-args '+ sourceString + ' ' + tempString
@@ -69,16 +56,17 @@ def toTemp(sourceFile, sourceFolder, sourceHost):
         os.makedirs(makeDir)
     os.system(systemScript)
     
-                        
-
 #######################
 # Copy to destination #
 #######################
-def toDest(destFolder, destHost, regexArray):
+def toDest(data, regexArray):
+    destFolder = data["destFolder"]
+    destHost = data["destHost"]
+    tempFolder = data["tempFolder"]
     confLines = data["toDestCriteria"]
     allowedExtensions = data["allowedExtensions"]
     
-    tempFiles = getFolderContents("f", tempFolder, localhost)
+    tempFiles = getFolderContents("f", tempFolder, "localhost")
     matchFileArray = []
     print ("TTT")
     print (tempFiles)
@@ -108,13 +96,13 @@ def toDest(destFolder, destHost, regexArray):
 
         destPath = os.path.join(destFolder, matchFile)
         destString = '"' + destHost + ':' + destPath + '"'
-        if (destHost == localhost):
+        if (destHost == "localhost"):
             destString = '"' + destPath + '"'
 
         tempString = '"' + os.path.join(tempFolder, matchFile) + '"'
 
         commandArray = ["ssh", "%s" % destHost]
-        if (destHost == localhost):
+        if (destHost == "localhost"):
             commandArray=[]
 
         commandArray.append("mkdir")
@@ -129,8 +117,3 @@ def toDest(destFolder, destHost, regexArray):
         systemScript = 'rsync -avz --protect-args ' + tempString + ' ' + destString
         print (systemScript)
         os.system(systemScript)
-
-# ... do stuff with dirpath
-def closeTemp():
-    print("by")
-    shutil.rmtree(tempFolder)

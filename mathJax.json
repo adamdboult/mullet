@@ -1,0 +1,38 @@
+{
+    "sourceHost": "localhost",
+    "sourceFolder": "/home/adam/Mathjax/",
+    "destHost": "localhost",
+    "destFolder": "/home/adam/MathJax/",
+    "toTempLimit": 0,
+    "functionArray": [
+	{
+	    "name": "toDest",
+	    "args": [
+		[
+		    "^MathJax.js$",
+		    "^config/default.js$",
+		    "^extensions/HTML-CSS/*",
+		    "^extensions/TeX/*",
+		    "^extensions/FontWarnings.js$",
+		    "^extensions/HelpDialog.js$",
+		    "^extensions/tex2jax.js$",
+		    "^fonts/HTML-CSS/TeX/woff/*",
+		    "^jax/input/TeX/*",
+		    "^jax/element/*",
+		    "^jax/output/HTML-CSS/autoload/*",
+		    "^jax/output/HTML-CSS/fonts/TeX/*",
+		    "^jax/output/HTML-CSS/config.js$",
+		    "^jax/output/HTML-CSS/imageFonts.js$",
+		    "^jax/output/HTML-CSS/jax.js$"
+		],
+		[
+		]
+	    ]
+	}
+    ],
+    "toTempCriteria":{
+	"typeMatch": 0,
+	"allowedExtensions":[
+	]
+    }
+}

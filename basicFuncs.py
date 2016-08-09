@@ -29,47 +29,49 @@ def getFolderContents(fileOrFolder, folder, host):
 
     return resultOutput
 
-#####################
-# Copy file to temp #
-#####################
-def toTemp(data, sourceFile):
-    print (data)
-    sourceFolder = data["sourceFolder"]
-    sourceHost = data["sourceHost"]
-    tempFolder = data["tempFolder"]
-    filename, file_extension = os.path.splitext(sourceFile)
-    
-    sourcePath = os.path.join(sourceFolder, sourceFile)
-    tempPath   = os.path.join(tempFolder, sourceFile)
-    
-    tempString = '"' + tempPath + '"'
-    sourceString = sourceHost + ':"' + sourcePath + '"'
-    if (sourceHost == "localhost"):
-        sourceString = '"' + sourcePath + '"'
+#############
+# Move file #
+#############
+def moveFile(sourceFile, hosts, folders):
+    destHost = hosts[1]
+    fromHost = hosts[0]
 
-    systemScript = 'rsync -avz --protect-args '+ sourceString + ' ' + tempString
+    destFold = folders[1]
+    fromFold = folders[0]
+    
+    fromPath = os.path.join(fromFold, sourceFile)
+    destPath = os.path.join(destFold, sourceFile)
+    
+    destString = '"' + destPath + '"'
+    fromString = '"' + fromPath + '"'
 
-    makeDir = os.path.dirname(tempPath)
+    if (fromHost != "localhost"):
+        fromString = fromHost + ':' + fromString
+    if (destHost != "localhost"):
+        destString = destHost + ':' + destString
+
+    print ("-----------")
+    print (sourceFile)
+    makeDir = os.path.dirname(destPath)
     try:
         os.stat(makeDir)
     except:
         os.makedirs(makeDir)
+
+    systemScript = 'rsync -avz --protect-args '+ fromString + ' ' + destString
+    print (systemScript)
     os.system(systemScript)
     
 #######################
 # Copy to destination #
 #######################
-def toDest(data, regexArray):
-    destFolder = data["destFolder"]
-    destHost = data["destHost"]
+def toDest(data, regexArray, allowedExtensions):
     tempFolder = data["tempFolder"]
-    confLines = data["toDestCriteria"]
-    allowedExtensions = data["allowedExtensions"]
-    
+    folders = [tempFolder,data["destFolder"]]
+    hosts = ["localhost", data["destHost"]]
+
     tempFiles = getFolderContents("f", tempFolder, "localhost")
     matchFileArray = []
-    print ("TTT")
-    print (tempFiles)
     for tempFile in tempFiles:
         if (tempFile[0]=="/"):
             tempFile = tempFile[1:]
@@ -92,28 +94,4 @@ def toDest(data, regexArray):
 
     print (matchFileArray)
     for matchFile in matchFileArray:
-        filename, file_extension = os.path.splitext(matchFile)
-
-        destPath = os.path.join(destFolder, matchFile)
-        destString = '"' + destHost + ':' + destPath + '"'
-        if (destHost == "localhost"):
-            destString = '"' + destPath + '"'
-
-        tempString = '"' + os.path.join(tempFolder, matchFile) + '"'
-
-        commandArray = ["ssh", "%s" % destHost]
-        if (destHost == "localhost"):
-            commandArray=[]
-
-        commandArray.append("mkdir")
-        commandArray.append("-p")
-        commandArray.append(os.path.dirname(destPath))
-        ssh = subprocess.Popen(commandArray,
-                               shell = False,
-                               stdout = subprocess.PIPE,
-                               stderr = subprocess.PIPE)
-
-        results = ssh.stdout.readlines()
-        systemScript = 'rsync -avz --protect-args ' + tempString + ' ' + destString
-        print (systemScript)
-        os.system(systemScript)
+        moveFile(matchFile, hosts, folders)

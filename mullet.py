@@ -63,8 +63,7 @@ for copyArraySub in toTempArray:
     data["tempFolder"] = tempfile.mkdtemp()
     for sourceFile in copyArraySub:
         print ("Copying: " + sourceFile)
-        toTemp(data, sourceFile)
-        
+        moveFile(sourceFile, [data["sourceHost"], "localhost"], [data["sourceFolder"], data["tempFolder"]])
     for entry in data["functionArray"]:
         print ("Process: ", entry["name"])
         functionArgs = [data]
@@ -91,10 +90,12 @@ print ("done")
 # other
 ###
 
-# test with an album
+##*** filter deploy
+#test mathjax.conf
 
-# copy, set up mod and own
-# unzip down with command line
+# remove filter copy from github
+
+
 ### ownquant
 #mergeall quant
 #copy all across to temp
@@ -102,8 +103,17 @@ print ("done")
 #for each of the concatenated, extract rows, cols
 #call gnuplot
 #copy gnuplots across to me
-##*** filter deploy
-#filter copy, use existing conf but replace whitespace with copies. should work
+
+
+
+
+# unzip down with command line
+
+# makedirs on remote, mod and own
+# copy, set up mod and own
+
+# test with an album
+
 ##*** system depoy
 ###**** easy
 #install

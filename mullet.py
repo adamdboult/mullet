@@ -11,14 +11,11 @@ import tempfile
 ########
 # Conf #
 ########
-#localhost = "localhost"
 dir = os.path.dirname(os.path.realpath(__file__))
 
 inputPath = sys.argv[1]
 with open(inputPath) as data_file:
-    data = json.load(data_file)
-
-data["localhost"] = "localhost"
+    future = json.load(data_file)
 
 #############
 # Functions #
@@ -26,102 +23,96 @@ data["localhost"] = "localhost"
 from basicFuncs import *
 from moreFuncs import *
 
-########################
-# What to copy to temp #
-########################
+data = {}
+newTemp(data)
 
-if (data["toTempCriteria"]["typeMatch"] == 0):
-    destList = []
-else:
-    destList = getFolderContents(data["toTempCriteria"]["typeMatch"], data["destFolder"], data["destHost"])
+#############
+# Array fix #
+#############
+def fixArray(data, inputs):
+    tempArr = []
+    for input in inputs:
+        if isinstance(input, list):
+            newInput = fixArray(data, input)
+        else:
+            try:
+                newInput = data[input]
+            except:
+                newInput = input
+        tempArr.append(newInput)
+    return tempArr
 
-sourceList = getFolderContents("f", data["sourceFolder"], data["sourceHost"])
+#################
+# Loop function #
+#################
+def nextF(future):
+    thisFunction = future[0]
+    data["inputs"] = fixArray(data, thisFunction["inputs"])
+    try:
+        oldResult = copy.deepcopy(data["result"])
+    except:
+        oldResult = None
 
-#####################
-# Loop through tree #
-#####################
-copyArraySub = []
-toTempArray = []
-for sourceFile in sourceList:
-    if (data["toTempCriteria"]["typeMatch"] == "d"):
-        filename, file_extension = os.path.splitext(sourceFile)
-        if (filename in destList):
-            continue
-    elif (data["toTempCriteria"]["typeMatch"] == "f"):
-        if (sourceFile in destList):
-            continue
-        
-    copyArraySub.append(sourceFile)
-    if (len(copyArraySub) == data["toTempLimit"]):
-        toTempArray.append(copyArraySub)
-        copyArraySub=[]
+    try:
+        a = thisFunction["response"]
+        responseExist = True
+    except:
+        responseExist = False
+    try:
+        a = thisFunction["loop"]
+        loopExist = True
+    except:
+        loopExist = False
+    data["result"] = globals()[thisFunction["name"]](data)
+    if (responseExist):
+        newFuture = copy.deepcopy(thisFunction["response"])
+        if (loopExist):
+            try:
+                loopArray = data[thisFunction["loop"]]
+            except:
+                loopArray = thisFunction["loop"]
+            keepData = copy.deepcopy(data["result"])
+            for loop in loopArray:
+                data["result"] = copy.deepcopy(keepData)
+                data["loop"] = loop
+                nextF(newFuture)
+        else:
+            nextF(newFuture)
 
-if (len(copyArraySub) > 0 ):
-    toTempArray.append(copyArraySub)
+        try:
+            data["result"] = copy.deepcopy(oldResult)
+        except:
+            data.pop("result", None)
 
-for copyArraySub in toTempArray:
-    data["tempFolder"] = tempfile.mkdtemp()
-    for sourceFile in copyArraySub:
-        print ("Copying: " + sourceFile)
-        moveFile(sourceFile, [data["sourceHost"], "localhost"], [data["sourceFolder"], data["tempFolder"]])
-    for entry in data["functionArray"]:
-        print ("Process: ", entry["name"])
-        functionArgs = [data]
-        for arg in entry["args"]:
-            print ("----------")
-            if (type(arg) in [list, int]):
-                newF = arg
-            elif (arg[0] == "'" or arg[0] == '"'):
-                newF = arg[1:-1]
-            else:
-                newF = globals()[arg]
-            functionArgs.append(newF)
-        globals()[entry["name"]](*functionArgs)
+    if (len(future)> 1):
+        nextF(future[1:])
 
-    shutil.rmtree(data["tempFolder"])
+#########
+# Start #
+#########
+nextF(future)
 
-##########
-# Finish #
-##########
-print ("done")
+#######
+# End #
+#######
+endTemp(data)
 
+#########
+# To Do #
+#########
+# keys
+## import private gpg keys
+## import public gpg keys
+## import authorized keys
+## import known hosts
+## import private key (laptop)
+## import private key (ec2)
+# install / remove
 
-###
-# other
-###
+# set up for servian
+## install certbot, do bou.lt, www.bou.lt, cloud.bou.lt, mail.bou.lt
+## copy apache files
+## enable apache files
+## restart apache
 
-##*** filter deploy
-#test mathjax.conf
-
-# remove filter copy from github
-
-
-### ownquant
-#mergeall quant
-#copy all across to temp
-#for each .conf, concatenate all files in directory
-#for each of the concatenated, extract rows, cols
-#call gnuplot
-#copy gnuplots across to me
-
-
-
-
-# unzip down with command line
-
-# makedirs on remote, mod and own
-# copy, set up mod and own
-
-# test with an album
-
-##*** system depoy
-###**** easy
-#install
-#remove
-#copy
-#git clone if not exist
-###**** other
-#authkeys
-#knowns hosts
-#import gnupg public
-#import gnpg private
+# set up for ec2

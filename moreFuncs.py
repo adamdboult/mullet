@@ -7,116 +7,172 @@ import socket
 import zipfile
 import tarfile
 
-###############
-# Expand file #
-###############
-def expandFile(data, rawPath, expandPath, writePath):
-    tempFolder = data["tempFolder"]
-    rawPath = os.path.join(tempFolder, rawPath)
-    expandPath = os.path.join(tempFolder, expandPath)
-    writePath = os.path.join(tempFolder, writePath)
-    with open (writePath, "w") as outFile:
-        with open (rawPath) as rawFile:
-            with open (expandPath) as expandFile:
-                expandLines = expandFile.read().splitlines()
-                for rawLine in rawFile:
-                    for expandLine in expandLines:
-                        outFile.write(expandLine.replace("\n","") + rawLine)
-
-###############
-# Write value #
-###############
-def writeValue(data, writePath):
-    tempFolder = data["tempFolder"]
-    writePath = os.path.join(tempFolder, writePath)
-    with open (writePath, "w") as outFile:
-        rawLine = socket.gethostname()
-        outFile.write(rawLine)
-                        
-###############
-# Filter file #
-###############
-def filterFile(data, rawPath, filterPath, writePath):
-    tempFolder = data["tempFolder"]
-    rawPath = os.path.join(tempFolder, rawPath)
-    filterPath = os.path.join(tempFolder, filterPath)
-    writePath = os.path.join(tempFolder, writePath)
-    with open (writePath, "w") as outFile:
-        with open (rawPath) as rawFile:
-            with open (filterPath) as filterFile:
-                filterLines = filterFile.read().splitlines()
-                for rawLine in rawFile:
-                    write = 1
-                    for filterLine in filterLines:
-                        if (filterLine.strip() == rawLine.strip()):
-                            write = 0
-                    if (write == 1):
-                        outFile.write(rawLine)
-
-###############
-# Append file #
-###############
-def appendFile(data, readPath, writePath, skipRow, skipCol):
-    tempFolder = data["tempFolder"]
-    readPath = os.path.join(tempFolder, readPath)
-    writePath = os.path.join(tempFolder, writePath)
-    with open (writePath, "a") as outfile:
-        with open (readPath) as infile:
-            row = 0
-            for line in infile:
-                if (row >= skipRow):
-                    outfile.write(line[skipCol:])
-                row += 1
-
-##################
-# Convert to MP3 #
-##################
-def toMP3(data, extension, commandArray):
-    tempFolder = data["tempFolder"]
-    folderContents = getFolderContents("f", tempFolder, "localhost")
-    for folderContent in folderContents:
-        filename, file_extension = os.path.splitext(folderContent)
-        if (filename[0]=="/"):
-            filename = filename[1:]
-        if (file_extension == extension):
-            
-            filePath = os.path.join(tempFolder, folderContent)
-            folderPath = os.path.join(tempFolder, filename)
-
-            systemScript = ""
-            for command in commandArray:
-                if (command[0] == "'" or command[0] == '"'):
-                    systemScript += command[1:-1]
-                else:
-                    systemScript +=globals()[command]
-            print (systemScript)
-            os.system(systemScript)
+import datetime
+from operator import itemgetter
+from basicFuncs import *
 
 ##################
 # Unzip function #
 ##################
 def unZip(data):
-    tempFolder = data["tempFolder"]
-    folderContents = getFolderContents("f", tempFolder, "localhost")
-    for folderContent in folderContents:
-        filePath = os.path.join(tempFolder, folderContent)
-        os.chdir(tempFolder)
-
+    print ("unz")
+    print (data)
+    paths = data["inputs"][0]
+    print (paths)
+    filePath = joinFolder(paths)
+    outpath = os.path.dirname(filePath)
         
-        if (filePath.endswith(".zip")):
-            fh = open(filePath, 'rb')
-            z = zipfile.ZipFile(fh)
-            for name in z.namelist():
-                outpath = folderPath
-                z.extract(name, outpath)
-            fh.close()
+    if (filePath.endswith(".zip")):
+        fh = open(filePath, 'rb')
+        z = zipfile.ZipFile(fh)
+        for name in z.namelist():
+            z.extract(name, outpath)
+        fh.close()
 
-        elif (filePath.endswith(".tar.gz")):
-            tar =  tarfile.open(filePath, "r:gz")
-            tar.extractall()
-            tar.close()
+    elif (filePath.endswith(".tar.gz")):
+        tar =  tarfile.open(filePath, "r:gz")
+        tar.extractall()
+        tar.close()
 
-        elif (filePath.endswith(".tar")):
-            tar =  tarfile.open(filePath, "r:")
-            tar.extractall()
-            tar.close()
+    elif (filePath.endswith(".tar")):
+        tar =  tarfile.open(filePath, "r:")
+        tar.extractall()
+        tar.close()
+        
+    else:
+        pass
+
+###############
+# Expand file #
+###############
+def expandFile(data):
+    print ("EXPANDING")
+    rawLines = data["inputs"][0]
+    paths = data["inputs"][1]
+    pre = data["inputs"][2]
+
+    expandPath = joinFolder(paths)
+    
+    results = []
+    with open (expandPath) as expandFile:
+        expandLines = expandFile.read().splitlines()
+        for rawLine in rawLines:
+            for expandLine in expandLines:
+                if (pre=="true"):
+                    candidate = expandLine + rawLine
+                else:
+                    candidate = rawLine + expandLine
+                candidate = candidate.replace("\n","")+"\n"
+                results.append(candidate)
+    return results
+
+################
+# Get hostname #
+################
+def getHostName(data):
+    rawLine = socket.gethostname()
+    return [rawLine]
+
+###############
+# Filter file #
+###############
+def filterFile(data):
+    rawLines = data["inputs"][0]
+    paths = data["inputs"][1]
+
+    filterPath = joinFolder(paths)
+    results = []
+    with open (filterPath) as filterFile:
+        filterLines = filterFile.read().splitlines()
+        for rawLine in rawLines:
+            write = 1
+            for filterLine in filterLines:
+                if (filterLine.strip() == rawLine.strip()):
+                    write = 0
+            if (write == 1):
+                results.append(rawLine)
+
+        return results
+
+##########
+# To MP3 #
+##########
+def toMP3(data):
+    paths = data["inputs"][0]
+
+    filePath = joinFolder(paths)
+    newPath = os.path.splitext(filePath)[0]+".mp3"
+    
+    commandArray = ["ffmpeg", "-i ", filePath, "-qscale:a", "0", newPath]
+    runSys([commandArray])
+    
+############
+# OwnQuant #
+############
+def ownQuant(data):
+    inputDir = data["tempFolder"]
+
+    thisRegex = "^.*\.csv$"
+    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
+    for filePath in fileArray:
+        writePath = folderpath + "ALL"+foldername + ".csv"
+
+        skipRow = 0
+        if (fileExists):
+            skipRow = 1
+
+        appendFile(data, filePath, writePath, skipRow, 0)
+
+    thisRegex = "^ALL.*\.csv$"
+    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
+
+    for filePath in fileArray:
+        confName = folderpath + foldername +".conf"
+        outputName =folderpath + "OUT" + foldername + ".csv"
+
+        with open (inputName, "r") as inputFile:
+            inputRows = inputFile.splitrows()
+            with open(confName, 'rb') as confFile:
+                confRows = fileConf.read().splitlines()
+                # load date format
+                with open(outputName, "w") as outputFile:
+                    # correct date format
+                    # sort by date format
+
+                    #process top row, start at 2nd
+                    for inputRow in inputRows:
+                        inputRow[0] = datetime.datetime.strptime(row[0], "%d/%m/%Y")
+                        inputRow[0] = row[0].strftime("%d/%m/%Y")
+            
+                        newValue = ""
+                        # skip first two, process?
+                        for confRow in confRows:
+                            confArray = confRow.split(',')
+                            dataType = confArray[0]
+                            if (dataType == "date"):
+                                newValue = testSplit[int(confArray[1])]
+                                newValue = datetime.datetime.strptime(newValue, confRows[1]).strftime("%d/%m/%Y")
+                            elif (dataType == "copy"):
+                                newValue = testSplit[int(confArray[1])]
+                            elif (dataType == "divide"):
+                                newValue = float(testSplit[int(confArray[1])]) / float(testSplit[int(confArray[2])])
+                            elif (dataType == "weight"):
+                                newValue = 0
+                            for k in range (1, len(confArray), 2):
+                                newValue = newValue + float(testSplit[int(confArray[k])]) * float(confArray[k + 1])
+
+                            if (toAdd == ""):
+                                toAdd = str(newValue)
+                            else:
+                                toAdd = toAdd + ',' + str(newValue)
+                                
+                        outputRows.append(toAdd)
+
+                    outputRows.sort(key=itemgetter(0))  # sort by the datetime column
+                    for outputRow in outputRows:
+                        fileOutput.write("%s\n" % stringOut)
+
+    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
+    for filePath in fileArray:
+        systemScript = ("do gnuplot")
+        os.sys(systemScript)

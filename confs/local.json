@@ -1,0 +1,115 @@
+[
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/laptop/copy/conf/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/ownCloud/PC/mullet/laptop/copy/conf/", "/home/adam/"], "false"]
+            }
+	]
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/laptop/private/cron/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/ownCloud/PC/mullet/laptop/private/cron/", "/etc/cron.daily/"], "true"]
+            }
+	]
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/laptop/copy/cron/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/ownCloud/PC/mullet/laptop/copy/cron/", "/etc/cron.hourly/"], "true"]
+
+            }
+	]
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/Projects/mullet/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/Projects/mullet/", "/usr/local/sbin/"], "true"]
+            }
+	]
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/laptop/copy/sbin/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/ownCloud/PC/mullet/laptop/copy/sbin/", "/usr/local/sbin/"], "true"]
+
+            }
+	]
+    },
+    {
+	"name":"getFolderContents",
+	"inputs": ["d", ["/home/adam/ownCloud/Music/"], "localhost"],
+	"response": [
+	    {
+		"name": "getMatchContents",
+		"inputs": ["f", "start", "true", ["/mnt/sdb1/FLAC"], "adam@bou.lt", "result"],
+		"loop": "result",
+		"response": [
+		    {
+			"name": "tempRefresh",
+			"inputs":["tempFolder"]
+		    },
+		    {
+			"name": "moveFile",
+			"inputs": ["loop", ["adam@bou.lt", "localhost"], ["/mnt/sdb1/FLAC", "tempFolder"], "false"]
+		    },
+		    {
+			"name": "getMatchContents",
+			"inputs": ["f", "end", "false", ["tempFolder"], "localhost", ["zip", "tar.gz", "tar"]],
+			"loop": "result",
+			"response": [
+			    {
+				"name": "unZip",
+				"inputs":[["tempFolder", "result"]]
+			    }
+			]
+		    },
+		    {
+			"name": "getMatchContents",
+			"inputs":["f", "end", "false", ["tempFolder"], "localhost", ["flac"]],
+			"loop": "result",
+			"response":
+			[
+			    {
+				"name": "runSys",
+				"inputs":["ffmpeg -i ", "loop", ".flac -qscale:a 0 ", "loop", ".mp3"]
+			    }
+			]
+		    },
+		    {
+			"name": "getMatchContents",
+			"inputs":["f", "end", "false", ["tempFolder"], "localhost", ["mp3", "png", "jpg"]],
+			"loop": "result",
+			"response":
+			[
+			    {
+				"name": "moveFile",
+				"inputs": ["loop", ["localhost", "localhost"], ["tempFolder", "/home/adam/ownCloud/Music"], "false"]
+			    }
+			]
+		    }
+		]
+	    }
+	]
+    }
+]

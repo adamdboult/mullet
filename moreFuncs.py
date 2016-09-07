@@ -6,6 +6,7 @@ import socket
 
 import zipfile
 import tarfile
+import shlex
 
 import datetime
 from operator import itemgetter
@@ -102,9 +103,24 @@ def toMP3(data):
 
     filePath = joinFolder(paths)
     newPath = os.path.splitext(filePath)[0]+".mp3"
-    
-    commandArray = ["ffmpeg", "-i ", filePath, "-qscale:a", "0", newPath]
-    runSys([commandArray])
+
+    filePath = filePath.replace("(", "\\(")
+    filePath = filePath.replace(")", "\\)")
+    filePath = filePath.replace(" ", "\\ ")
+    filePath = filePath.replace("&", "\\&")
+
+    newPath = newPath.replace("(", "\\(")
+    newPath = newPath.replace(")", "\\)")
+    newPath = newPath.replace(" ", "\\ ")
+    newPath = newPath.replace("&", "\\&")
+
+
+    commandString = "ffmpeg -i " + filePath + " -qscale:a 0 " + newPath
+    print (commandString)
+
+    commandArray = shlex.split(commandString)
+    data["inputs"][0]=commandArray
+    runSys(data)
     
 ############
 # OwnQuant #

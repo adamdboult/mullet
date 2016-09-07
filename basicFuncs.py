@@ -77,7 +77,9 @@ def runSys(data):
                            shell = False,
                            stdout = subprocess.PIPE,
                            stderr = subprocess.PIPE)
-
+    errors = ssh.stderr.read().splitlines()
+    print ("errors")
+    print (errors)
     result = ssh.stdout.read().splitlines()
     return result
 

@@ -36,6 +36,31 @@ def readFile(data):
     return results
 
 ###############
+# Escape func #
+###############
+def escapeFunc(string, specials):
+    for special in specials:
+        string = string.replace(special, "\\" + special)
+    return string
+        
+#################
+# Escape string #
+#################
+def escapeString(string):
+    characters = ["(", ")", "-", " ","&"]
+    string = escapeFunc(string, characters)
+    return string
+
+################
+# Escape regex #
+################
+def escapeRegex(string):
+    characters = ["(", ")"]
+    string = escapeFunc(string, characters)
+
+    return string
+
+###############
 # Append file #
 ###############
 def appendFile(data):
@@ -67,20 +92,23 @@ def runSys(data):
     host = "localhost"
     if (len(data["inputs"]) > 1):
         host = data["inputs"][1]
-    print (commandArray)
     if (host != "localhost"):
         commandHost = ["ssh", "%s" % host]
         for i in range(len(commandHost)):
             commandArray.insert(i, commandHost[i])
     print (commandArray)
-    ssh = subprocess.Popen(commandArray,
-                           shell = False,
-                           stdout = subprocess.PIPE,
-                           stderr = subprocess.PIPE)
-    errors = ssh.stderr.read().splitlines()
-    print ("errors")
-    print (errors)
-    result = ssh.stdout.read().splitlines()
+    result = []
+    with subprocess.Popen(commandArray,
+                          shell = False,
+                          stdout = subprocess.PIPE,
+                          stderr = subprocess.PIPE,
+                          bufsize = 1,
+                          universal_newlines=True) as p:
+        for line in p.stdout:
+            print(line, end='')
+            result.append(line.replace("\n",""))
+        for line in p.stderr:
+            print(line, end='')
     return result
 
 #######################
@@ -101,7 +129,10 @@ def getFolderContents(data):
     results = runSys(newData)
     resultOutput =[]
     for entry in results:
-        newA = str(entry,'utf-8')[len(filePath):]
+        try:
+            newA = str(entry,'utf-8')[len(filePath):]
+        except:
+            newA = entry[len(filePath):]
         if (len(newA) > 0):
             if (newA[0] == "/"):
                 newA = newA[1:]
@@ -136,16 +167,27 @@ def moveFile(data):
         destString = destHost + ':' + destString
 
     makeDir = os.path.dirname(destPath)
+
+    systemScript = "mkdir -p " + escapeString(makeDir)
+    if (sudo == "true"):
+        systemScript = "sudo " + systemScript
     try:
         os.stat(makeDir)
     except:
-        os.makedirs(makeDir)
+        print (systemScript)
+        commandArray = shlex.split(systemScript)
+        data["inputs"][0]=commandArray
+        runSys(data)
+        #os.system(systemScript)
 
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
     if (sudo == "true"):
         systemScript = "sudo " + systemScript
     print (systemScript)
-    os.system(systemScript)
+    commandArray = shlex.split(systemScript)
+    data["inputs"][0]=commandArray
+    runSys(data)
+    #os.system(systemScript)
 
 #######################
 # Get contents, regex #
@@ -179,7 +221,8 @@ def getMatchContents(data):
         else:
             thisMatch = 0
             for regex in regexArray:
-                regex = "^.*"+regex+"*.$"
+                regex = escapeRegex(regex)
+                regex = "^.*"+regex+".*$"
                 pattern = re.compile(regex)
                 if (pattern.match(toMatch)):
                     if (len(regex)>0):
@@ -190,8 +233,6 @@ def getMatchContents(data):
                 matchFileArray.append(tempFile)
             else:
                 a=1
-    print ("contents are")
-    print (matchFileArray)
     return matchFileArray
 
 ##############

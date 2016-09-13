@@ -21,8 +21,10 @@ def unZip(data):
     paths = data["inputs"][0]
     print (paths)
     filePath = joinFolder(paths)
-    outpath = os.path.dirname(filePath)
-        
+    
+    outpath = os.path.splitext(filePath)[0]
+    #outpath = joinFolder(os.path.dirname(filePath), os.path.basename(filePath))
+    
     if (filePath.endswith(".zip")):
         fh = open(filePath, 'rb')
         z = zipfile.ZipFile(fh)
@@ -32,12 +34,12 @@ def unZip(data):
 
     elif (filePath.endswith(".tar.gz")):
         tar =  tarfile.open(filePath, "r:gz")
-        tar.extractall()
+        tar.extractall(outpath)
         tar.close()
 
     elif (filePath.endswith(".tar")):
         tar =  tarfile.open(filePath, "r:")
-        tar.extractall()
+        tar.extractall(outpath)
         tar.close()
         
     else:
@@ -95,6 +97,19 @@ def filterFile(data):
 
         return results
 
+###########
+# Install #
+###########
+def install(data):
+    programs = data["inputs"][0]
+
+    for program in programs:
+        commandString = "sudo apt-get -y install " + program.replace("\n","")
+        print (commandString)
+        commandArray = shlex.split(commandString)
+        data["inputs"][0]=commandArray
+        runSys(data)
+
 ##########
 # To MP3 #
 ##########
@@ -104,16 +119,8 @@ def toMP3(data):
     filePath = joinFolder(paths)
     newPath = os.path.splitext(filePath)[0]+".mp3"
 
-    filePath = filePath.replace("(", "\\(")
-    filePath = filePath.replace(")", "\\)")
-    filePath = filePath.replace(" ", "\\ ")
-    filePath = filePath.replace("&", "\\&")
-
-    newPath = newPath.replace("(", "\\(")
-    newPath = newPath.replace(")", "\\)")
-    newPath = newPath.replace(" ", "\\ ")
-    newPath = newPath.replace("&", "\\&")
-
+    filePath = escapeString(filePath)
+    newPath = escapeString(newPath)
 
     commandString = "ffmpeg -i " + filePath + " -qscale:a 0 " + newPath
     print (commandString)
@@ -125,70 +132,119 @@ def toMP3(data):
 ############
 # OwnQuant #
 ############
+# look all files
+# copy all files to temp
+# look for all csv files
+# make ALLaldermore.csv etc (if exists, skip 1)
+# find all ALLetc.csv
+# for each, find matching conf
 def ownQuant(data):
-    inputDir = data["tempFolder"]
+    inputDir = data["inputs"][0]
+    tempFolder = data["tempFolder"]
+    thisRegex = "csv"
 
-    thisRegex = "^.*\.csv$"
-    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
+    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+
+    fileArray = getMatchContents(data)
+    allPaths = []
     for filePath in fileArray:
-        writePath = folderpath + "ALL"+foldername + ".csv"
-
-        skipRow = 0
-        if (fileExists):
+        split = filePath.split("/")
+        baseFolder = split[len(split)-2]
+        dirname = os.path.dirname(filePath)
+        writePath = joinFolder([tempFolder, dirname, "ALL" + baseFolder +".csv"])
+        if (writePath in allPaths):
             skipRow = 1
+        else:
+            allPaths.append(writePath)
+            skipRow = 0
 
-        appendFile(data, filePath, writePath, skipRow, 0)
+        data["inputs"] = [[data["tempFolder"],filePath], skipRow, 0]
 
-    thisRegex = "^ALL.*\.csv$"
-    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
-
+        lines = readFile(data)
+    
+        data["inputs"] = [lines, [writePath]]
+        appendFile(data)
+    thisRegex = "ALL"
+    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+    fileArray = getMatchContents(data)
     for filePath in fileArray:
-        confName = folderpath + foldername +".conf"
-        outputName =folderpath + "OUT" + foldername + ".csv"
 
+        split = filePath.split("/")
+        baseFolder = split[len(split)-2]
+
+        dirname = os.path.dirname(filePath)
+        confName = joinFolder([tempFolder, dirname, "conf.conf"])
+        inputName = joinFolder([tempFolder, filePath])
+        outputName = joinFolder([tempFolder, dirname, "OUT" + baseFolder +".csv"])
+        ### I'M UP TO HERE
         with open (inputName, "r") as inputFile:
-            inputRows = inputFile.splitrows()
+            inputRows = inputFile.readlines()
             with open(confName, 'rb') as confFile:
-                confRows = fileConf.read().splitlines()
-                # load date format
+                confRowsRaw = confFile.readlines()
+                confRows =[]
+                for row in confRowsRaw:
+                    confRows.append(str(row, 'utf-8').replace("\n",""))
+                
                 with open(outputName, "w") as outputFile:
-                    # correct date format
-                    # sort by date format
-
-                    #process top row, start at 2nd
+                    # SORT BY DATE FORMAT
+                    outputRows = [confRows[2]]
+                    i = 0
+                    j = 0
                     for inputRow in inputRows:
-                        inputRow[0] = datetime.datetime.strptime(row[0], "%d/%m/%Y")
-                        inputRow[0] = row[0].strftime("%d/%m/%Y")
-            
-                        newValue = ""
-                        # skip first two, process?
-                        for confRow in confRows:
-                            confArray = confRow.split(',')
-                            dataType = confArray[0]
-                            if (dataType == "date"):
-                                newValue = testSplit[int(confArray[1])]
-                                newValue = datetime.datetime.strptime(newValue, confRows[1]).strftime("%d/%m/%Y")
-                            elif (dataType == "copy"):
-                                newValue = testSplit[int(confArray[1])]
-                            elif (dataType == "divide"):
-                                newValue = float(testSplit[int(confArray[1])]) / float(testSplit[int(confArray[2])])
-                            elif (dataType == "weight"):
-                                newValue = 0
-                            for k in range (1, len(confArray), 2):
-                                newValue = newValue + float(testSplit[int(confArray[k])]) * float(confArray[k + 1])
+                        inputRow = inputRow.replace("\n","")
+                        inputArray = inputRow.split(",")
+                        if (i == 0):
+                            i = 1
+                        else:
+                            newValue = ""
+                            j = 0
+                            toAdd = ""
+                            print (confRows)
+                            for confRow in confRows:
+                                if (j > 2):
+                                    confArray = confRow.split(',')
+                                    dataType = confArray[0]
+                                    if (dataType == "date"):
+                                        newValue = inputArray[int(confArray[1])]
+                                        newValue = datetime.datetime.strptime(newValue, confRows[1])
+                                        newValue = datetime.datetime.strftime(newValue, "%d/%m/%Y")
+                                    elif (dataType == "copy"):
+                                        newValue = inputArray[int(confArray[1])]
+                                    elif (dataType == "divide"):
+                                        newValue = float(inputArray[int(confArray[1])]) / float(inputArray[int(confArray[2])])
+                                    elif (dataType == "weight"):
+                                        newValue = 0
+                                        for k in range (1, len(confArray), 2):
+                                            newValue = newValue + float(inputArray[int(confArray[k])]) * float(confArray[k + 1])
 
-                            if (toAdd == ""):
-                                toAdd = str(newValue)
-                            else:
-                                toAdd = toAdd + ',' + str(newValue)
-                                
-                        outputRows.append(toAdd)
-
-                    outputRows.sort(key=itemgetter(0))  # sort by the datetime column
+                                    if (toAdd == ""):
+                                        toAdd = str(newValue)
+                                    else:
+                                        toAdd = toAdd + ',' + str(newValue)
+                                j = j + 1
+                            outputRows.append(toAdd)
+                        i = 1
+                    print ("HERE WE ARE")
+                    print (outputRows)
+                    print ("half")
+                    sortRows = outputRows[1:]
+                    sortRows.sort(key=itemgetter(0))  # sort by the datetime column
+                    sortRows.insert(0, outputRows[0])
+                    
+                    print (outputRows)
+                    print ("DONE")
                     for outputRow in outputRows:
-                        fileOutput.write("%s\n" % stringOut)
+                        outputFile.write("%s\n" % outputRow)
 
-    fileArray = getMatchContents(data["tempFolder"], "localhost", thisRegex)
+    print ("S DELTA")
+    thisRegex = "OUT"
+    data["inputs"] = ["f", "start", "false", [inputDir], "localhost", [thisRegex]]
+    fileArray = getMatchContents(data)
     for filePath in fileArray:
-        systemScript = ("do gnuplot")
-        os.sys(systemScript)
+        outputPath = joinFolder([tempFolder,os.path.dirname(filePath),"graph.png"])
+        inputPath = joinFolder([tempFolder, filePath])
+        commandString = "gnuplot -e \"filename='" + inputPath+"'\" -e \"outputpath='" + outputPath+"'\" /home/adam/Projects/mullet/gnuplot.gp"
+        print (commandString)
+        data["inputs"] = [shlex.split(commandString)]
+
+        runSys(data)

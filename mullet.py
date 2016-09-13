@@ -96,23 +96,3 @@ nextF(future)
 # End #
 #######
 endTemp(data)
-
-#########
-# To Do #
-#########
-# keys
-## import private gpg keys
-## import public gpg keys
-## import authorized keys
-## import known hosts
-## import private key (laptop)
-## import private key (ec2)
-# install / remove
-
-# set up for servian
-## install certbot, do bou.lt, www.bou.lt, cloud.bou.lt, mail.bou.lt
-## copy apache files
-## enable apache files
-## restart apache
-
-# set up for ec2

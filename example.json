@@ -1,0 +1,13 @@
+[
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/laptop/copy/conf/"],"localhost"],
+	"loop": "result",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["loop", ["localhost","localhost"], ["/home/adam/ownCloud/PC/mullet/laptop/copy/conf/", "/home/adam/"], "false"]
+            }
+	]
+    },
+]

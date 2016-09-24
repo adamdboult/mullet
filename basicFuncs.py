@@ -4,9 +4,12 @@
 import os
 import re
 import subprocess
+
+import shlex
 import tempfile
 import shutil
 import copy
+import pwd
 
 #########
 # Print #
@@ -19,12 +22,13 @@ def printF(data):
 #############
 def readFile(data):
     print ("READING")
+
     paths = data["inputs"][0]
     skipRow = data["inputs"][1]
     skipCol = data["inputs"][2]
 
     readPath = joinFolder(paths)
-    
+    print (readPath)    
     results = []
     with open (readPath) as infile:
         row = 0
@@ -32,7 +36,7 @@ def readFile(data):
             if (row >= skipRow):
                 results.append(line[skipCol:])
             row += 1
-                    
+    print ("READ")
     return results
 
 ###############
@@ -89,28 +93,50 @@ def joinFolder(folders):
 def runSys(data):
     print ("runsys")
     commandArray = data["inputs"][0]
+    print (commandArray)
     host = "localhost"
     if (len(data["inputs"]) > 1):
         host = data["inputs"][1]
+
+    commandArrays=[]
+    cont = True
+    while (cont == True):
+        try:
+            indMatch = commandArray.index("|")
+        except:
+            indMatch = False
+        if (indMatch):
+            commandArrays.append(commandArray[:indMatch])
+            commandArray = commandArray[indMatch+1:]
+        else:
+            cont = False
+    commandArrays.append(commandArray)
+    
     if (host != "localhost"):
         commandHost = ["ssh", "%s" % host]
-        for i in range(len(commandHost)):
-            commandArray.insert(i, commandHost[i])
-    print (commandArray)
-    result = []
-    with subprocess.Popen(commandArray,
-                          shell = False,
-                          stdout = subprocess.PIPE,
-                          stderr = subprocess.PIPE,
-                          bufsize = 1,
-                          universal_newlines=True) as p:
-        for line in p.stdout:
-            print(line, end='')
-            result.append(line.replace("\n",""))
-        for line in p.stderr:
-            print(line, end='')
-    return result
-
+        for j in range (len(commandArrays)):
+            array = commandArrays[j]
+            for i in range(len(commandHost)):
+                array.insert(i, commandHost[i])
+            commandArrays[j] = array
+    proc = []
+    processInput = None
+    for i in range(len(commandArrays)):
+        proc.append(
+            subprocess.Popen(
+                commandArrays[i],
+                shell = False,
+                stdout = subprocess.PIPE,
+                stdin = subprocess.PIPE,
+                #stderr = subprocess.PIPE,
+                bufsize = 1,
+                universal_newlines = True
+            )
+        )
+        processInput = proc[i].communicate(input = processInput)[0].rstrip()
+    print (processInput)
+    return processInput
+        
 #######################
 # Get folder contents #
 #######################
@@ -126,9 +152,10 @@ def getFolderContents(data):
     
     newData = copy.deepcopy(data)
     newData["inputs"] = [commandArray, host]
-    results = runSys(newData)
+    results = runSys(newData).splitlines()
     resultOutput =[]
     for entry in results:
+        print (entry)
         try:
             newA = str(entry,'utf-8')[len(filePath):]
         except:
@@ -139,28 +166,39 @@ def getFolderContents(data):
             resultOutput.append(newA)
     return resultOutput
 
+#################
+# Get user list #
+#################
+def getUserList():
+    arr = []
+    for p in pwd.getpwall():
+        arr.append(p[0])
+    return arr
+
 #############
 # Move file #
 #############
 def moveFile(data):
     print ("move file")
+
     sourceFile = data["inputs"][0]
     hosts = data["inputs"][1]
     folders = data["inputs"][2]
     sudo = data["inputs"][3]
-
     destHost = hosts[1]
     fromHost = hosts[0]
 
     destFold = folders[1]
     fromFold = folders[0]
 
+    userList = getUserList()
+    
     fromPath = joinFolder([fromFold, sourceFile])
     destPath = joinFolder([destFold, sourceFile])
 
     destString = '"' + destPath + '"'
     fromString = '"' + fromPath + '"'
-
+    
     if (fromHost != "localhost"):
         fromString = fromHost + ':' + fromString
     if (destHost != "localhost"):
@@ -171,23 +209,28 @@ def moveFile(data):
     systemScript = "mkdir -p " + escapeString(makeDir)
     if (sudo == "true"):
         systemScript = "sudo " + systemScript
+    elif (sudo in userList):
+        systemScript = "sudo su - " + sudo + " -c \"" + systemScript + "\""
     try:
         os.stat(makeDir)
     except:
-        print (systemScript)
         commandArray = shlex.split(systemScript)
-        data["inputs"][0]=commandArray
+        data["inputs"]=[commandArray]
         runSys(data)
-        #os.system(systemScript)
 
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
     if (sudo == "true"):
         systemScript = "sudo " + systemScript
-    print (systemScript)
-    commandArray = shlex.split(systemScript)
-    data["inputs"][0]=commandArray
+        commandArray = shlex.split(systemScript)
+    elif (sudo in userList):
+        systemScriptPre = "sudo su - " + sudo + " -c"
+        commandArray = shlex.split(systemScriptPre)
+        commandArray.append(systemScript)
+    else:
+        commandArray = shlex.split(systemScript)
+    print (commandArray)
+    data["inputs"]=[commandArray]
     runSys(data)
-    #os.system(systemScript)
 
 #######################
 # Get contents, regex #
@@ -200,12 +243,14 @@ def getMatchContents(data):
     paths = data["inputs"][3]
     host = data["inputs"][4]
     regexArray = data["inputs"][5]
-
     newInputs = copy.deepcopy(data)
     newInputs["inputs"]=[fileOrFolder, paths, host]
     tempFiles = getFolderContents(newInputs)
+
     matchFileArray = []
+    print (tempFiles)
     for tempFile in tempFiles:
+        print (tempFile)
         if (tempFile[0]=="/"):
             tempFile = tempFile[1:]
         filename, file_extension = os.path.splitext(tempFile)

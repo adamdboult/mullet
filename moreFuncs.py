@@ -11,6 +11,7 @@ import shlex
 import datetime
 from operator import itemgetter
 from basicFuncs import *
+import csv
 
 ##################
 # Unzip function #
@@ -73,7 +74,7 @@ def expandFile(data):
 # Get hostname #
 ################
 def getHostName(data):
-    rawLine = socket.gethostname()
+    rawLine = socket.gethostname()+"\n"
     return [rawLine]
 
 ###############
@@ -104,12 +105,17 @@ def install(data):
     programs = data["inputs"][0]
 
     for program in programs:
-        commandString = "sudo apt-get -y install " + program.replace("\n","")
-        print (commandString)
+        program = program.replace("\n","")
+        commandString = "dpkg -s " + program + " | grep Status"
         commandArray = shlex.split(commandString)
-        data["inputs"][0]=commandArray
-        runSys(data)
-
+        data["inputs"]=[commandArray]
+        myOutput = runSys(data)
+        print ("GOT!")
+        if (len(myOutput) == 0):
+            commandString = "sudo apt-get -y install " + program
+            commandArray = shlex.split(commandString)
+            data["inputs"]=[commandArray]
+            runSys(data)
 ##########
 # To MP3 #
 ##########
@@ -126,7 +132,7 @@ def toMP3(data):
     print (commandString)
 
     commandArray = shlex.split(commandString)
-    data["inputs"][0]=commandArray
+    data["inputs"]=[commandArray]
     runSys(data)
     
 ############
@@ -176,7 +182,6 @@ def ownQuant(data):
         confName = joinFolder([tempFolder, dirname, "conf.conf"])
         inputName = joinFolder([tempFolder, filePath])
         outputName = joinFolder([tempFolder, dirname, "OUT" + baseFolder +".csv"])
-        ### I'M UP TO HERE
         with open (inputName, "r") as inputFile:
             inputRows = inputFile.readlines()
             with open(confName, 'rb') as confFile:
@@ -190,15 +195,16 @@ def ownQuant(data):
                     outputRows = [confRows[2]]
                     i = 0
                     j = 0
-                    for inputRow in inputRows:
-                        inputRow = inputRow.replace("\n","")
-                        inputArray = inputRow.split(",")
+                    #for inputRow in inputRows:
+                    for inputArray in csv.reader(inputRows):
+                        #inputRow = inputRow.replace("\n","")
+                        #inputArray = inputRow.split(",")
                         if (i == 0):
                             i = 1
                         else:
                             newValue = ""
                             j = 0
-                            toAdd = ""
+                            toAdd = []
                             print (confRows)
                             for confRow in confRows:
                                 if (j > 2):
@@ -216,27 +222,29 @@ def ownQuant(data):
                                         newValue = 0
                                         for k in range (1, len(confArray), 2):
                                             newValue = newValue + float(inputArray[int(confArray[k])]) * float(confArray[k + 1])
-
-                                    if (toAdd == ""):
-                                        toAdd = str(newValue)
-                                    else:
-                                        toAdd = toAdd + ',' + str(newValue)
+                                    toAdd.append(newValue)
                                 j = j + 1
                             outputRows.append(toAdd)
                         i = 1
-                    print ("HERE WE ARE")
-                    print (outputRows)
-                    print ("half")
                     sortRows = outputRows[1:]
-                    sortRows.sort(key=itemgetter(0))  # sort by the datetime column
-                    sortRows.insert(0, outputRows[0])
-                    
-                    print (outputRows)
-                    print ("DONE")
-                    for outputRow in outputRows:
-                        outputFile.write("%s\n" % outputRow)
+                    sortRows = sorted(sortRows, key=lambda x: datetime.datetime.strptime(x[0], "%d/%m/%Y"))
+                    csvRows = []
+                    for row in sortRows:
+                        print (row)
+                        toAdd = ""
+                        i = 0
+                        for element in row:
+                            if (i == 0):
+                                toAdd = str(element)
+                            else:
+                                toAdd = toAdd + "," + str(element)
+                            i+=1
+                        csvRows.append(toAdd)
+                            
+                    csvRows.insert(0, outputRows[0])
+                    for csvRow in csvRows:
+                        outputFile.write("%s\n" % csvRow)
 
-    print ("S DELTA")
     thisRegex = "OUT"
     data["inputs"] = ["f", "start", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
@@ -246,5 +254,4 @@ def ownQuant(data):
         commandString = "gnuplot -e \"filename='" + inputPath+"'\" -e \"outputpath='" + outputPath+"'\" /home/adam/Projects/mullet/gnuplot.gp"
         print (commandString)
         data["inputs"] = [shlex.split(commandString)]
-
         runSys(data)

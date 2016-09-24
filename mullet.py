@@ -65,14 +65,23 @@ def nextF(future):
         loopExist = False
     data["result"] = globals()[thisFunction["name"]](data)
     if (responseExist):
+        print ("HERE")
+        print (data["result"])
         newFuture = copy.deepcopy(thisFunction["response"])
         if (loopExist):
+            print ("AND")
             try:
+                print (1)
                 loopArray = data[thisFunction["loop"]]
             except:
+                print (2)
                 loopArray = thisFunction["loop"]
             keepData = copy.deepcopy(data["result"])
+            print ("LA")
+            print (loopArray)
             for loop in loopArray:
+                print ("L")
+                print (loop)
                 data["result"] = copy.deepcopy(keepData)
                 data["loop"] = loop
                 nextF(newFuture)
@@ -95,4 +104,4 @@ nextF(future)
 #######
 # End #
 #######
-endTemp(data)
+#endTemp(data)

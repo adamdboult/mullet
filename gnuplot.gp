@@ -8,7 +8,7 @@ set timefmt "%d/%m/%Y"
 set format x "%d/%m/%Y"
 
 set xlabel "Date"
-set ylabel "Y label"
+set ylabel filename
 
 set key below
 set grid

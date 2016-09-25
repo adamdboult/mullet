@@ -18,7 +18,6 @@ import csv
 ##################
 def unZip(data):
     print ("unz")
-    print (data)
     paths = data["inputs"][0]
     print (paths)
     filePath = joinFolder(paths)
@@ -103,17 +102,22 @@ def filterFile(data):
 ###########
 def install(data):
     programs = data["inputs"][0]
-
+    host = data["inputs"][1]
     for program in programs:
         program = program.replace("\n","")
         commandString = "dpkg -s " + program + " | grep Status"
-        commandArray = shlex.split(commandString)
+        if (host != "localhost"):
+            commandArray = ["ssh", host, commandString]
+        else:
+            commandArray = shlex.split(commandString)
         data["inputs"]=[commandArray]
         myOutput = runSys(data)
-        print ("GOT!")
         if (len(myOutput) == 0):
             commandString = "sudo apt-get -y install " + program
-            commandArray = shlex.split(commandString)
+            if (host != "localhost"):
+                commandArray = ["ssh", "-t", "-t", host, commandString]
+            else:
+                commandArray = shlex.split(commandString)
             data["inputs"]=[commandArray]
             runSys(data)
 ##########
@@ -129,12 +133,40 @@ def toMP3(data):
     newPath = escapeString(newPath)
 
     commandString = "ffmpeg -i " + filePath + " -qscale:a 0 " + newPath
-    print (commandString)
 
     commandArray = shlex.split(commandString)
     data["inputs"]=[commandArray]
     runSys(data)
     
+
+##############
+# Import PPA #
+##############
+def importPPA(data):
+    PPAList = data["inputs"][0].splitlines()
+    for PPA in PPAList:
+        commandString = "sudo add-apt-repository ppa:" + PPA
+        commandArray = shlex.split(commandString)
+        data["inputs"]=[commandArray]
+        runSys(data)
+        
+    commandString = "sudo add-get update"
+    commandArray = shlex.split(commandString)
+    data["inputs"]=[commandArray]
+    runSys(data)
+
+##################
+# Import GPG Pub #
+##################
+def importGPGPub(data):
+    userName = data["inputs"][0]
+    keyPath = joinFolder(data["inputs"][1])
+    commandString = "sudo su - " + userName + " -c gpg --import " + keyPath
+
+    commandArray = shlex.split(commandString)
+    data["inputs"]=[commandArray]
+    runSys(data)
+
 ############
 # OwnQuant #
 ############
@@ -173,8 +205,9 @@ def ownQuant(data):
     thisRegex = "ALL"
     data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
+    #yLabels = []
+    cStart = 3
     for filePath in fileArray:
-
         split = filePath.split("/")
         baseFolder = split[len(split)-2]
 
@@ -182,32 +215,28 @@ def ownQuant(data):
         confName = joinFolder([tempFolder, dirname, "conf.conf"])
         inputName = joinFolder([tempFolder, filePath])
         outputName = joinFolder([tempFolder, dirname, "OUT" + baseFolder +".csv"])
+        cumOutName = joinFolder([tempFolder, dirname, "CUMOUT" + baseFolder +".csv"])
         with open (inputName, "r") as inputFile:
+
             inputRows = inputFile.readlines()
             with open(confName, 'rb') as confFile:
                 confRowsRaw = confFile.readlines()
                 confRows =[]
                 for row in confRowsRaw:
                     confRows.append(str(row, 'utf-8').replace("\n",""))
-                
+                countType = confRows[2]
+
                 with open(outputName, "w") as outputFile:
-                    # SORT BY DATE FORMAT
                     outputRows = [confRows[2]]
                     i = 0
                     j = 0
-                    #for inputRow in inputRows:
                     for inputArray in csv.reader(inputRows):
-                        #inputRow = inputRow.replace("\n","")
-                        #inputArray = inputRow.split(",")
-                        if (i == 0):
-                            i = 1
-                        else:
+                        if  (i > 0):
                             newValue = ""
                             j = 0
                             toAdd = []
-                            print (confRows)
                             for confRow in confRows:
-                                if (j > 2):
+                                if (j > cStart):
                                     confArray = confRow.split(',')
                                     dataType = confArray[0]
                                     if (dataType == "date"):
@@ -221,37 +250,117 @@ def ownQuant(data):
                                     elif (dataType == "weight"):
                                         newValue = 0
                                         for k in range (1, len(confArray), 2):
-                                            newValue = newValue + float(inputArray[int(confArray[k])]) * float(confArray[k + 1])
+                                            string = inputArray[int(confArray[k])]
+                                            try:
+                                                value = float(string)
+                                            except:
+                                                value = 0
+                                            newValue +=  value * float(confArray[k + 1])
                                     toAdd.append(newValue)
                                 j = j + 1
                             outputRows.append(toAdd)
-                        i = 1
+                        i += 1
                     sortRows = outputRows[1:]
                     sortRows = sorted(sortRows, key=lambda x: datetime.datetime.strptime(x[0], "%d/%m/%Y"))
                     csvRows = []
-                    for row in sortRows:
-                        print (row)
+                    for sortedRow in sortRows:
                         toAdd = ""
                         i = 0
-                        for element in row:
-                            if (i == 0):
+                        for element in sortedRow:
+                            if (toAdd == ""):
                                 toAdd = str(element)
                             else:
                                 toAdd = toAdd + "," + str(element)
-                            i+=1
+                            i += 1
                         csvRows.append(toAdd)
                             
                     csvRows.insert(0, outputRows[0])
+                                    
                     for csvRow in csvRows:
                         outputFile.write("%s\n" % csvRow)
+                        
+                    if (countType == "cumul"):
+                        csvRows = []
+                        i = 0
+                        for sortedRow in sortRows:
+                            sortRows[i][1] = float(sortRows[i][1])
+                            if (i > 0):
+                                sortRows[i][1] = sortRows[i - 1][1] + float(sortRows[i][1])
+                            i += 1
+                            toAdd = ""
+                            j = 0
+                            for element in sortedRow:
+                                if (toAdd == ""):
+                                    toAdd = str(element)
+                                else:
+                                    toAdd = toAdd + "," + str(element)
+                                j += 1
+                            csvRows.append(toAdd)
+                            
+                        csvRows.insert(0, outputRows[0])
+                        with open(cumOutName, "w") as cumOutFile:
+                            for csvRow in csvRows:
+                                cumOutFile.write("%s\n" % csvRow)
+                        
+    thisRegex = ".meta"
+    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+    fileArray = getMatchContents(data)
+    for filePath in fileArray:
+        print ()
+        print()
+        print ("FP IS")
+        print (filePath)
+        inputPath = joinFolder([tempFolder, filePath])
+        outPath = joinFolder([tempFolder,filePath.split(".")[0]+"OUT.csv"])
+        with open (inputPath, "r") as inputFile:
+            with open (outPath, "w") as outputFile:
+                outputFile.write("%s\n" % "Date,Total")
+                toMerge = inputFile.read().splitlines()
+                print ("LIS")
+                print (toMerge)
+                allRows=[]
+                for sourcePath in toMerge:
+                    fullSourcePath = joinFolder([tempFolder,sourcePath])
+                    print (fullSourcePath)
+                    with open(fullSourcePath, "r") as sourceFile:
+                        sourceRows = sourceFile.readlines()
+                        i = 0
+                        for rowArr in csv.reader(sourceRows):
+                            if (i > 0):
+                                allRows.append(rowArr)
+                            i += 1
 
+                print (allRows)
+                sortRows = sorted(allRows, key=lambda x: datetime.datetime.strptime(x[0], "%d/%m/%Y"))
+                csvRows = []
+                i = 0
+                for sortedRow in sortRows:
+                    sortRows[i][1] = float(sortRows[i][1])
+                    if (i > 0):
+                        sortRows[i][1] = sortRows[i - 1][1] + float(sortRows[i][1])
+                    i += 1
+                    toAdd = ""
+                    j = 0
+                    for element in sortedRow:
+                        if (toAdd == ""):
+                            toAdd = str(element)
+                        else:
+                            toAdd = toAdd + "," + str(element)
+                        j += 1
+                    csvRows.append(toAdd)
+                            
+                for row in csvRows:
+                    outputFile.write("%s\n" % row)                
+        print ("DONE!")
     thisRegex = "OUT"
     data["inputs"] = ["f", "start", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
+
+    i = 0
     for filePath in fileArray:
-        outputPath = joinFolder([tempFolder,os.path.dirname(filePath),"graph.png"])
+        outputPath = joinFolder([tempFolder,os.path.dirname(filePath),os.path.basename(filePath)[:3] + "graph.png"])
         inputPath = joinFolder([tempFolder, filePath])
         commandString = "gnuplot -e \"filename='" + inputPath+"'\" -e \"outputpath='" + outputPath+"'\" /home/adam/Projects/mullet/gnuplot.gp"
-        print (commandString)
         data["inputs"] = [shlex.split(commandString)]
         runSys(data)
+        i+=1

@@ -228,7 +228,6 @@ def moveFile(data):
         commandArray.append(systemScript)
     else:
         commandArray = shlex.split(systemScript)
-    print (commandArray)
     data["inputs"]=[commandArray]
     runSys(data)
 

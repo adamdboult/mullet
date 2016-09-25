@@ -5,12 +5,11 @@ set terminal png
 
 set xdata time
 set timefmt "%d/%m/%Y"
-set format x "%d/%m/%Y"
+set format x "%m %y"	
+set xtics rotate
 
-set xlabel "Date"
-set ylabel filename
+set key autotitle columnheader below
 
-set key below
 set grid
 
 set datafile separator ","

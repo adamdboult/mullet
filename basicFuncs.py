@@ -323,6 +323,13 @@ def getMatchContents(data):
 ##############
 def newTemp(data):
     data["tempFolder"] = tempfile.mkdtemp()
+
+    systemScript = 'chmod 777 ' + data["tempFolder"]
+    commandArray = shlex.split(systemScript)
+    data["inputs"]=[commandArray]
+    runSys(data)
+
+    
     
 def tempRefresh(data):
     print ("REFRESH")

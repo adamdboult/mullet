@@ -161,7 +161,7 @@ def importPPA(data):
 def importGPGPub(data):
     userName = data["inputs"][0]
     keyPath = joinFolder(data["inputs"][1])
-    commandString = "sudo su - " + userName + " -c gpg --import " + keyPath
+    commandString = "sudo su - " + userName + " -c \"gpg --import " + keyPath + "\""
 
     commandArray = shlex.split(commandString)
     data["inputs"]=[commandArray]

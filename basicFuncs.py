@@ -184,7 +184,15 @@ def moveFile(data):
     sourceFile = data["inputs"][0]
     hosts = data["inputs"][1]
     folders = data["inputs"][2]
-    sudo = data["inputs"][3]
+
+
+    mode = "755"
+    user = "false"
+    if (len(data["inputs"]) > 3):
+        user = data["inputs"][3]
+        if (len(data["inputs"]) > 4):
+            mode = data["inputs"][4]
+
     destHost = hosts[1]
     fromHost = hosts[0]
 
@@ -207,10 +215,13 @@ def moveFile(data):
     makeDir = os.path.dirname(destPath)
 
     systemScript = "mkdir -p " + escapeString(makeDir)
-    if (sudo == "true"):
+    if (destHost != "localhost"):
+        systemScript = "ssh " + destHost + " " + systemScript
+    if (user == "root"):
         systemScript = "sudo " + systemScript
-    elif (sudo in userList):
-        systemScript = "sudo su - " + sudo + " -c \"" + systemScript + "\""
+    elif (user in userList):
+        systemScript = "sudo su - " + user + " -c \"" + systemScript + "\""
+
     try:
         os.stat(makeDir)
     except:
@@ -219,17 +230,45 @@ def moveFile(data):
         runSys(data)
 
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
-    if (sudo == "true"):
+    if (user == "root"):
         systemScript = "sudo " + systemScript
         commandArray = shlex.split(systemScript)
-    elif (sudo in userList):
-        systemScriptPre = "sudo su - " + sudo + " -c"
+    elif (user in userList):
+        systemScriptPre = "sudo su - " + user + " -c"
         commandArray = shlex.split(systemScriptPre)
         commandArray.append(systemScript)
     else:
         commandArray = shlex.split(systemScript)
     data["inputs"]=[commandArray]
     runSys(data)
+
+    # change owner
+    if (user != "false"):
+        systemScript = 'chown ' + user + ":" + user + " " + destString
+        if (user == "root"):
+            systemScript = "sudo " + systemScript
+            commandArray = shlex.split(systemScript)
+        elif (user in userList):
+            systemScriptPre = "sudo su - " + user + " -c"
+            commandArray = shlex.split(systemScriptPre)
+            commandArray.append(systemScript)
+        else:
+            commandArray = shlex.split(systemScript)
+        data["inputs"]=[commandArray]
+        runSys(data)
+
+        systemScript = 'chmod ' + mode + " " + destString
+        if (user == "root"):
+            systemScript = "sudo " + systemScript
+            commandArray = shlex.split(systemScript)
+        elif (user in userList):
+            systemScriptPre = "sudo su - " + user + " -c"
+            commandArray = shlex.split(systemScriptPre)
+            commandArray.append(systemScript)
+        else:
+            commandArray = shlex.split(systemScript)
+        data["inputs"]=[commandArray]
+        runSys(data)
 
 #######################
 # Get contents, regex #

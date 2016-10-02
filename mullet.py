@@ -52,7 +52,7 @@ def nextF(future):
         oldResult = copy.deepcopy(data["result"])
     except:
         oldResult = None
-
+        
     try:
         a = thisFunction["response"]
         responseExist = True

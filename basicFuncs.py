@@ -328,8 +328,6 @@ def newTemp(data):
     commandArray = shlex.split(systemScript)
     data["inputs"]=[commandArray]
     runSys(data)
-
-    
     
 def tempRefresh(data):
     print ("REFRESH")

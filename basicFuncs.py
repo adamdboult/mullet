@@ -122,6 +122,7 @@ def runSys(data):
     proc = []
     processInput = None
     for i in range(len(commandArrays)):
+        print (commandArrays[i])
         proc.append(
             subprocess.Popen(
                 commandArrays[i],

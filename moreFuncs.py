@@ -4,6 +4,8 @@
 import os
 import socket
 
+import urllib.request
+
 import zipfile
 import tarfile
 import shlex
@@ -96,6 +98,68 @@ def filterFile(data):
                 results.append(rawLine)
 
         return results
+
+#############
+# Git clone #
+#############
+def gitClone(data):
+    gitArray = data["inputs"][0]
+    print ("GIT")
+    print (gitArray)
+    for git in gitArray:
+        print ()
+        print ("NEW")
+        print (git)
+        URL = git[0].replace("\n", "")
+        user= git[2]
+        print ("B: " + URL)
+        sourceArray = URL.split("/")
+        filename = sourceArray[len(sourceArray) - 1]
+        filename = filename.split(".")[0]
+
+        
+        destName = os.path.join(git[1], filename)
+        commandString = "git clone " + URL + " " + destName
+        print ("C: " + destName)
+        
+        userList = getUserList()
+        if (user == "root"):
+            systemScript = "sudo " + commandString
+            commandArray = shlex.split(commandString)
+        elif (user in userList):
+            systemScriptPre = "sudo su - " + user + " -c"
+            commandArray = shlex.split(systemScriptPre)
+            commandArray.append(commandString)
+        else:
+            commandArray = shlex.split(commandString)
+
+        
+        print (commandArray)
+        data["inputs"]=[commandArray]
+        runSys(data)
+        print ("done this")
+    print ("DONE ALL")
+
+############
+# Download #
+############
+def download(data):
+    dlArray = data["inputs"][0]
+    print ("DL")
+    print (dlArray)
+    for download in dlArray:
+        print ()
+        print ("NEW")
+        print ("A: " + download)
+        URL = download[0].replace("\n", "")
+        sourceArray = URL.split("/")
+        filename = sourceArray[len(sourceArray) - 1]
+        destName = os.path.join(download[1], filename)
+        print ("B: " + URL)
+        print ("C: " + destName)
+        urllib.request.urlretrieve(URL, destName)
+        print ("done this")
+    print ("DONE ALL")
 
 ###########
 # Install #

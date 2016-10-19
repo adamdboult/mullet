@@ -1,0 +1,13 @@
+[
+    {
+	"name": "getFolderContents",
+	"inputs": ["f",["/home/adam/ownCloud/PC/mullet/ec2/"],"localhost"],
+	"loop": "file",
+	"response": [
+            {
+		"name": "moveFile",
+		"inputs": ["file", ["localhost","ubuntu@yetipredict.com"], ["/home/adam/ownCloud/PC/mullet/ec2/", "/home/ubuntu/mulletData/"]]
+            }
+	]
+    }
+]

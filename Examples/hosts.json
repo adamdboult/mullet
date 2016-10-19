@@ -1,0 +1,140 @@
+[
+    {
+	"name": "getFolderContents",
+	"inputs": ["f", ["/home/adam/ownCloud/PC/scripts/mulletScripts/hosts/"], "localhost"],
+	"loop": "file",
+	"response": [
+	    {
+		"name": "moveFile",
+		"inputs": ["file", ["localhost", "localhost"], ["/home/adam/ownCloud/PC/scripts/mulletScripts/hosts", "tempFolder"], "true"]
+	    }
+	]
+    },
+    {
+	"name": "getHostName",
+	"inputs": [],
+	"response": [
+	    {
+		"name": "appendFile",
+		"inputs":["result", ["tempFolder", "longList"]]
+	    }
+	]
+    },
+    {
+	"name": "readFile",
+	"inputs": [["tempFolder", "lists", "hostsInput.txt"], 0, 0],
+	"response": [
+	    {
+		"name": "filterFile",
+		"inputs": ["result",["tempFolder", "whiteList.txt"]],
+		"response": [
+		    {
+			"name":"appendFile",
+			"inputs": ["result", ["tempFolder", "allList"]]
+		    }
+		]
+	    }	
+	]
+    },
+    {
+	"name": "readFile",
+	"inputs": [["tempFolder", "lists", "Hosts.sex"], 6, 10],
+	"response": [
+	    {
+		"name": "filterFile",
+		"inputs": ["result",["tempFolder", "whiteList.txt"]],
+		"response": [
+		    {
+			"name":"appendFile",
+			"inputs": ["result", ["tempFolder", "longList"]]
+		    }
+		]
+	    }
+	]
+    },
+    {
+	"name": "readFile",
+	"inputs": [["tempFolder", "lists", "rlwpx.txt"], 2, 10],
+	"response": [
+	    {
+		"name": "filterFile",
+		"inputs": ["result",["tempFolder", "whiteList.txt"]],
+		"response": [
+		    {
+			"name":"appendFile",
+			"inputs": ["result", ["tempFolder", "longList"]]
+		    }
+		]
+	    }
+	]
+    },
+    {
+	"name":"readFile",
+	"inputs": [["tempFolder", "allList"], 0, 0],
+	"response":
+	[
+	    {
+		"name": "expandFile",
+		"inputs": ["result",["tempFolder", "preLists", "hostsPre.txt"],"true"],
+		"response": [
+		    {
+			"name": "appendFile",
+			"inputs":["result", ["tempFolder", "longList"]]
+		    }
+		]
+	    }
+	]
+    },
+    {
+	"name":"readFile",
+	"inputs":[["tempFolder", "longList"],0,0],
+	"response":[
+	    {
+		"name": "expandFile",
+		"inputs": ["result",["tempFolder", "preLists", "ip.txt"],"true"],
+		"response": [
+		    {
+			"name":"appendFile",
+			"inputs": ["result", ["tempFolder", "expandList"]]
+		    }
+		]
+	    }
+	]
+    },
+    {
+	"name":"readFile",
+	"inputs":[["tempFolder", "hostsStart.txt"],0,0],
+	"response":
+	[
+	    {
+		"name": "appendFile",
+		"inputs": ["result", ["tempFolder", "hosts"]]
+	    }
+	]
+    },
+    {
+	"name":"readFile",
+	"inputs":[["tempFolder", "expandList"],0,0],
+	"response": [
+	    {
+		"name": "appendFile",
+		"inputs": ["result", ["tempFolder", "hosts"]]
+	    }
+	]
+
+    },
+    {
+	"name":"readFile",
+	"inputs":[["tempFolder", "hostsEnd.txt"],0,0],
+	"response": [
+	    {
+		"name": "appendFile",
+		"inputs": ["result", ["tempFolder", "hosts"]]		
+	    }
+	]
+    },
+    {
+	"name":"moveFile",
+	"inputs": ["hosts",["localhost","localhost"],["tempFolder","/etc/"], "true"]
+    }
+]

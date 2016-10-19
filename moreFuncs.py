@@ -110,6 +110,7 @@ def gitClone(data):
         print ()
         print ("NEW")
         print (git)
+        git = git.split("\t")
         URL = git[0].replace("\n", "")
         user= git[2]
         print ("B: " + URL)
@@ -123,16 +124,7 @@ def gitClone(data):
         print ("C: " + destName)
         
         userList = getUserList()
-        if (user == "root"):
-            systemScript = "sudo " + commandString
-            commandArray = shlex.split(commandString)
-        elif (user in userList):
-            systemScriptPre = "sudo su - " + user + " -c"
-            commandArray = shlex.split(systemScriptPre)
-            commandArray.append(commandString)
-        else:
-            commandArray = shlex.split(commandString)
-
+        commandArray = userFix(commandString, user)
         
         print (commandArray)
         data["inputs"]=[commandArray]
@@ -151,13 +143,31 @@ def download(data):
         print ()
         print ("NEW")
         print ("A: " + download)
+        download = download.split("\t")
         URL = download[0].replace("\n", "")
         sourceArray = URL.split("/")
         filename = sourceArray[len(sourceArray) - 1]
         destName = os.path.join(download[1], filename)
+        user = download[2]
         print ("B: " + URL)
         print ("C: " + destName)
+        print (os.path.dirname(destName))
+        systemScript = "mkdir -p " + escapeString(os.path.dirname(destName))
+        commandArray = userFix(systemScript, user)
+        data["inputs"]=[commandArray]
+        runSys(data)
+
         urllib.request.urlretrieve(URL, destName)
+        mode = "644"
+        systemScript = 'chown ' + user + ":" + user + " " + destName
+        commandArray = userFix(systemScript, user)
+        data["inputs"]=[commandArray]
+        runSys(data)
+        systemScript = 'chmod ' + mode + " " + destName
+        commandArray = userFix(systemScript, user)
+        data["inputs"]=[commandArray]
+        runSys(data)
+
         print ("done this")
     print ("DONE ALL")
 
@@ -223,11 +233,13 @@ def importPPA(data):
 # Import GPG Pub #
 ##################
 def importGPGPub(data):
-    userName = data["inputs"][0]
+    print ("IMPORT")
+    user = data["inputs"][0]
+    print ("path is:")
     keyPath = joinFolder(data["inputs"][1])
-    commandString = "sudo su - " + userName + " -c \"gpg --import-ownertrust" + keyPath + "\""
-
-    commandArray = shlex.split(commandString)
+    print (keyPath)
+    commandString = "gpg --import " + keyPath
+    commandArray = userFix(commandString, user)
     data["inputs"]=[commandArray]
     runSys(data)
 

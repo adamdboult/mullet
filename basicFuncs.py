@@ -11,6 +11,8 @@ import shutil
 import copy
 import pwd
 
+import getpass
+
 #########
 # Print #
 #########
@@ -28,7 +30,6 @@ def readFile(data):
     skipCol = data["inputs"][2]
 
     readPath = joinFolder(paths)
-    print (readPath)    
     results = []
     with open (readPath) as infile:
         row = 0
@@ -36,7 +37,6 @@ def readFile(data):
             if (row >= skipRow):
                 results.append(line[skipCol:])
             row += 1
-    print ("READ")
     return results
 
 ###############
@@ -83,7 +83,12 @@ def appendFile(data):
 ########
 def joinFolder(folders):
     filePath = "/"
+    print ("JOINING")
     for path in folders:
+        if isinstance(path, list):
+            path = joinFolder(path)
+        if (path[0]=="/"):
+            path = path[1:]
         filePath = os.path.join(filePath, path)
     return filePath
     
@@ -93,7 +98,6 @@ def joinFolder(folders):
 def runSys(data):
     print ("runsys")
     commandArray = data["inputs"][0]
-    print (commandArray)
     host = "localhost"
     if (len(data["inputs"]) > 1):
         host = data["inputs"][1]
@@ -135,7 +139,6 @@ def runSys(data):
             )
         )
         processInput = proc[i].communicate(input = processInput)[0].rstrip()
-    print (processInput)
     return processInput
         
 #######################
@@ -143,12 +146,11 @@ def runSys(data):
 #######################
 def getFolderContents(data):
     print ("get folder cont")
+
     fileOrFolder = data["inputs"][0]
     paths = data["inputs"][1]
     host = data["inputs"][2]
-
     filePath = joinFolder(paths)
-
     commandArray = ["find", filePath, "-type", fileOrFolder]
     
     newData = copy.deepcopy(data)
@@ -156,7 +158,6 @@ def getFolderContents(data):
     results = runSys(newData).splitlines()
     resultOutput =[]
     for entry in results:
-        print (entry)
         try:
             newA = str(entry,'utf-8')[len(filePath):]
         except:
@@ -215,82 +216,76 @@ def moveFile(data):
 
     makeDir = os.path.dirname(destPath)
 
-    systemScript = "mkdir -p " + escapeString(makeDir)
-    if (destHost != "localhost"):
-        systemScript = "ssh " + destHost + " " + systemScript
-    if (user == "root"):
-        systemScript = "sudo " + systemScript
-    elif (user in userList):
-        systemScript = "sudo su - " + user + " -c \"" + systemScript + "\""
-
     try:
         os.stat(makeDir)
     except:
-        commandArray = shlex.split(systemScript)
+        systemScript = "mkdir -p " + escapeString(makeDir)
+        if (destHost != "localhost"):
+            systemScript = "ssh " + destHost + " " + systemScript
+        commandArray = userFix(systemScript, user)
+
         data["inputs"]=[commandArray]
         runSys(data)
 
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
-    if (user == "root"):
-        systemScript = "sudo " + systemScript
-        commandArray = shlex.split(systemScript)
-    elif (user in userList):
-        systemScriptPre = "sudo su - " + user + " -c"
-        commandArray = shlex.split(systemScriptPre)
-        commandArray.append(systemScript)
-    else:
-        commandArray = shlex.split(systemScript)
+    commandArray = userFix(systemScript, user)
     data["inputs"]=[commandArray]
     runSys(data)
 
     # change owner
     if (user != "false"):
         systemScript = 'chown ' + user + ":" + user + " " + destString
-        if (user == "root"):
-            systemScript = "sudo " + systemScript
-            commandArray = shlex.split(systemScript)
-        elif (user in userList):
-            systemScriptPre = "sudo su - " + user + " -c"
-            commandArray = shlex.split(systemScriptPre)
-            commandArray.append(systemScript)
-        else:
-            commandArray = shlex.split(systemScript)
+        commandArray = userFix(systemScript, user)
         data["inputs"]=[commandArray]
         runSys(data)
 
         systemScript = 'chmod ' + mode + " " + destString
-        if (user == "root"):
-            systemScript = "sudo " + systemScript
-            commandArray = shlex.split(systemScript)
-        elif (user in userList):
-            systemScriptPre = "sudo su - " + user + " -c"
-            commandArray = shlex.split(systemScriptPre)
-            commandArray.append(systemScript)
-        else:
-            commandArray = shlex.split(systemScript)
+        commandArray = userFix(systemScript, user)
         data["inputs"]=[commandArray]
         runSys(data)
 
+############
+# User fix #
+############
+def userFix(systemScript, user):
+    userList = getUserList()
+    if (user == "root"):
+        systemScript = "sudo " + systemScript
+        commandArray = shlex.split(systemScript)
+    elif (user == getpass.getuser()):
+        commandArray = shlex.split(systemScript)        
+    elif (user in userList):
+        systemScriptPre = "sudo su - " + user + " -c"
+        commandArray = shlex.split(systemScriptPre)
+        commandArray.append(systemScript)
+    else:
+        commandArray = shlex.split(systemScript)
+    return commandArray
+        
 #######################
 # Get contents, regex #
 #######################
 def getMatchContents(data):
     print ("get match contents")
+    
     fileOrFolder = data["inputs"][0]
     whatMatch = data["inputs"][1]
     anti = data["inputs"][2]
-    paths = data["inputs"][3]
-    host = data["inputs"][4]
-    regexArray = data["inputs"][5]
+    exact = data["inputs"][3]
+    paths = data["inputs"][4]
+    host = data["inputs"][5]
+    
+    regexArray = data["inputs"][6]
     newInputs = copy.deepcopy(data)
     newInputs["inputs"]=[fileOrFolder, paths, host]
     tempFiles = getFolderContents(newInputs)
 
     matchFileArray = []
     print (tempFiles)
+    print ()
+    print (regexArray)
     for tempFile in tempFiles:
-        print (tempFile)
-        if (tempFile[0]=="/"):
+        if (tempFile[0] == "/"):
             tempFile = tempFile[1:]
         filename, file_extension = os.path.splitext(tempFile)
         toMatch = tempFile
@@ -306,17 +301,21 @@ def getMatchContents(data):
             thisMatch = 0
             for regex in regexArray:
                 regex = escapeRegex(regex)
-                regex = "^.*"+regex+".*$"
-                pattern = re.compile(regex)
+                useRegex = "^.*" + regex + ".*$"
+                if (exact == "true"):
+                    useRegex = "^" + regex + "$"
+                pattern = re.compile(useRegex)
                 if (pattern.match(toMatch)):
-                    if (len(regex)>0):
+                    if (len(regex) > 0):
                         thisMatch = 1
             if (anti == "true"):
                 thisMatch = 1 - thisMatch
             if (thisMatch == 1):
                 matchFileArray.append(tempFile)
             else:
-                a=1
+                a = 1
+    print ("\nEnd:")
+    print (matchFileArray)
     return matchFileArray
 
 ##############
@@ -331,9 +330,10 @@ def newTemp(data):
     runSys(data)
     
 def tempRefresh(data):
-    print ("REFRESH")
-    endTemp(data)
-    newTemp(data)
+    a=1
+    #print ("REFRESH")
+    #endTemp(data)
+    #newTemp(data)
     
 def endTemp(data):
     data["tempFolder"] = shutil.rmtree(data["tempFolder"])

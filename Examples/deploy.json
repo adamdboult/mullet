@@ -1,0 +1,131 @@
+[
+    {
+	"path": "/home/adam/ownCloud/PC/mullet/laptop/"
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["d" ["path", "keys"], "localhost", 1],
+	"loop": "user",
+	"response" :[
+	    {
+		"name": "getFolderContents",
+		"inputs": ["f", ["path", ["keys", "user", "gpg/gpgPublic/"], "localhost"]],
+		"loop": "key",
+		"response": [
+		    {
+			"name": "importGPGPub",
+			"inputs": ["user", ["path", "keys", "user", "gpg/gpgPublic/", "key"]]
+		    }
+		]
+	    },
+	    {
+		"name": "getFolderContents",
+		"inputs": ["f", ["path", "keys", "user", "gpg/gpgKeys/"], "localhost"],
+		"loop": "key",
+		"response": [
+		    {
+			"name": "importGPGPub",
+			"inputs": ["user", ["path", "keys", "user", "gpg/gpgKeys/", "key"]]
+		    }
+		]
+	    },
+	    {
+		"name": "getFolderContents",
+		"inputs": ["f", ["path", "keys", "user", "ssh/knownHosts"], "localhost"],
+		"loop": "key",
+		"response": [
+	            {
+			"name": "readFile",
+			"inputs": [["path", "keys", "user", "ssh/knownHosts/", "key"], 0, 0],
+			"response": [
+			    {
+				"name": "appendFile",
+				"inputs": ["result", ["tempFolder", "known_hosts"]]
+			    }
+			]
+		    }
+		]
+	    },
+	    {
+		"name": "moveFile",
+		"inputs": ["known_hosts", ["localhost", "localhost"], ["tempFolder", ["/home/", "user", "/.ssh/"]], "user"]
+	    },
+	    {
+		"name": "getFolderContents",
+		"inputs": ["f", ["path", "keys", "user", "ssh/authorizedKeys"], "localhost"],
+		"loop": "result",
+		"response": [
+	            {
+			"name": "readFile",
+			"inputs": [["path", "keys", "user", "ssh/authorizedKeys/","loop"], 0, 0],
+			"response": [
+			    {
+				"name":"appendFile",
+				"inputs": ["result", ["tempFolder", "authorized_keys"]]
+			    }
+			]
+		    }
+		]
+	    }
+	    {
+		"name": "moveFile",
+		"inputs": ["authorized_keys", ["localhost", "localhost"], ["tempFolder", ["/home/", "user", "/.ssh/"]], "user"]
+	    }
+	]
+    }.
+    {
+	"name": "readFile",
+	"inputs": [["path", "install.txt"], 0, 0],
+	"response": [
+	    {
+		"name": "install",
+		"inputs": ["result", "localhost"]
+	    }
+	]
+    },
+    {
+	"name": "readFile",
+	"inputs": [["path", "git.txt"], 0, 0],
+	"response": [
+	    {
+		"name": "gitClone",
+		"inputs": ["result"]
+	    }
+	]
+    },
+    {
+	"name": "readFile",
+	"inputs": [["path", "download.txt"], 0, 0],
+	"response": [
+	    {
+		"name": "download",
+		"inputs": ["result"]
+	    }
+	]
+    },
+    {
+	"name": "getFolderContents",
+	"inputs": ["d", ["path", "copy"], "localhost", 1],
+	"loop": "user",
+	"response": [
+	    {
+		"name": "getFolderContents",
+		"inputs": ["d" ["path", "copy", "user"], "localhost", 1],
+		"loop": "code",
+		"response": [
+		    {
+			"name": "getFolderContents",
+			"inputs": ["f", ["path", "copy", "user", "code"], "localhost"],
+			"loop": "file",
+			"response": [
+			    {
+				"name": "moveFile",
+				"inputs": ["file", ["localhost", "localhost"], [["path", "copy", "user", "code"], "/"], "user", "code"]
+			    }
+			]
+		    }
+		]
+	    }
+	]
+    }
+]

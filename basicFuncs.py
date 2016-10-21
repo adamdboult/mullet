@@ -151,8 +151,14 @@ def getFolderContents(data):
     paths = data["inputs"][1]
     host = data["inputs"][2]
     filePath = joinFolder(paths)
-    commandArray = ["find", filePath, "-type", fileOrFolder]
-    
+    types = list(fileOrFolder)
+    print (types)
+    commandArray = ["find", filePath]
+    for typeChar in types:
+        commandArray.append("-type")
+        commandArray.append(typeChar)
+        commandArray.append("-o")
+    commandArray.pop()
     newData = copy.deepcopy(data)
     newData["inputs"] = [commandArray, host]
     results = runSys(newData).splitlines()
@@ -274,16 +280,13 @@ def getMatchContents(data):
     exact = data["inputs"][3]
     paths = data["inputs"][4]
     host = data["inputs"][5]
-    
     regexArray = data["inputs"][6]
+    
     newInputs = copy.deepcopy(data)
-    newInputs["inputs"]=[fileOrFolder, paths, host]
+    newInputs["inputs"] = [fileOrFolder, paths, host]
     tempFiles = getFolderContents(newInputs)
 
     matchFileArray = []
-    print (tempFiles)
-    print ()
-    print (regexArray)
     for tempFile in tempFiles:
         if (tempFile[0] == "/"):
             tempFile = tempFile[1:]
@@ -300,12 +303,16 @@ def getMatchContents(data):
         else:
             thisMatch = 0
             for regex in regexArray:
+                reallyMatch = toMatch
+                if (whatMatch == "start"):
+                    regex = regex.split(".")[0]
+                    reallyMatch = toMatch.split(".")[0]
                 regex = escapeRegex(regex)
                 useRegex = "^.*" + regex + ".*$"
                 if (exact == "true"):
                     useRegex = "^" + regex + "$"
                 pattern = re.compile(useRegex)
-                if (pattern.match(toMatch)):
+                if (pattern.match(reallyMatch)):
                     if (len(regex) > 0):
                         thisMatch = 1
             if (anti == "true"):
@@ -314,8 +321,15 @@ def getMatchContents(data):
                 matchFileArray.append(tempFile)
             else:
                 a = 1
+    print ("\nRemote")
+    for filea in tempFiles:
+        print (filea)
+    print ("\nLocal")
+    for fileb in regexArray:
+        print (fileb)
     print ("\nEnd:")
-    print (matchFileArray)
+    for filec in matchFileArray:
+        print (filec)
     return matchFileArray
 
 ##############
@@ -330,7 +344,7 @@ def newTemp(data):
     runSys(data)
     
 def tempRefresh(data):
-    a=1
+    a = 1
     #print ("REFRESH")
     #endTemp(data)
     #newTemp(data)

@@ -1,7 +1,7 @@
 [
     {
-	"name":"getFolderContents",
-	"inputs": ["d", ["/home/adam/ownCloud/Music/"], "localhost"],
+	"name": "getFolderContents",
+	"inputs": ["df", ["/home/adam/ownCloud/Music/"], "localhost"],
 	"response": [
 	    {
 		"name": "getMatchContents",

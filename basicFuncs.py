@@ -150,10 +150,18 @@ def getFolderContents(data):
     fileOrFolder = data["inputs"][0]
     paths = data["inputs"][1]
     host = data["inputs"][2]
+
+    depth = 0
+    if (len(data["inputs"]) > 3):
+        depth = int(data["inputs"][3])
+    
     filePath = joinFolder(paths)
     types = list(fileOrFolder)
     print (types)
     commandArray = ["find", filePath]
+    if (depth > 0):
+        commandArray.append("-maxdepth")
+        commandArray.append(str(depth))
     for typeChar in types:
         commandArray.append("-type")
         commandArray.append(typeChar)

@@ -353,9 +353,9 @@ def newTemp(data):
     
 def tempRefresh(data):
     a = 1
-    #print ("REFRESH")
-    #endTemp(data)
-    #newTemp(data)
+    print ("REFRESH")
+    endTemp(data)
+    newTemp(data)
     
 def endTemp(data):
     data["tempFolder"] = shutil.rmtree(data["tempFolder"])

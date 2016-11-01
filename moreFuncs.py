@@ -117,17 +117,15 @@ def gitClone(data):
         sourceArray = URL.split("/")
         filename = sourceArray[len(sourceArray) - 1]
         filename = filename.split(".")[0]
-
         
         destName = os.path.join(git[1], filename)
         commandString = "git clone " + URL + " " + destName
         print ("C: " + destName)
-        
+        print ("DA: " + commandString)
         userList = getUserList()
         commandArray = userFix(commandString, user)
-        
-        print (commandArray)
-        data["inputs"]=[commandArray]
+        print ("DB: ", commandArray)
+        data["inputs"] = [commandArray]
         runSys(data)
         print ("done this")
     print ("DONE ALL")
@@ -157,16 +155,19 @@ def download(data):
         data["inputs"]=[commandArray]
         runSys(data)
 
-        urllib.request.urlretrieve(URL, destName)
-        mode = "644"
-        systemScript = 'chown ' + user + ":" + user + " " + destName
-        commandArray = userFix(systemScript, user)
-        data["inputs"]=[commandArray]
-        runSys(data)
-        systemScript = 'chmod ' + mode + " " + destName
-        commandArray = userFix(systemScript, user)
-        data["inputs"]=[commandArray]
-        runSys(data)
+        try:
+            urllib.request.urlretrieve(URL, destName)
+            mode = "644"
+            systemScript = 'chown ' + user + ":" + user + " " + destName
+            commandArray = userFix(systemScript, user)
+            data["inputs"] = [commandArray]
+            runSys(data)
+            systemScript = 'chmod ' + mode + " " + destName
+            commandArray = userFix(systemScript, user)
+            data["inputs"] = [commandArray]
+            runSys(data)
+        except:
+            print ("Couldn't download", URL)
 
         print ("done this")
     print ("DONE ALL")
@@ -257,7 +258,7 @@ def ownQuant(data):
     tempFolder = data["tempFolder"]
     thisRegex = "csv"
 
-    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+    data["inputs"] = ["f", "false", "false", "false", [inputDir], "localhost", [thisRegex]]
 
     fileArray = getMatchContents(data)
     allPaths = []
@@ -279,7 +280,7 @@ def ownQuant(data):
         data["inputs"] = [lines, [writePath]]
         appendFile(data)
     thisRegex = "ALL"
-    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+    data["inputs"] = ["f", "false", "false", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
     #yLabels = []
     cStart = 3
@@ -379,7 +380,7 @@ def ownQuant(data):
                                 cumOutFile.write("%s\n" % csvRow)
                         
     thisRegex = ".meta"
-    data["inputs"] = ["f", "false", "false", [inputDir], "localhost", [thisRegex]]
+    data["inputs"] = ["f", "false", "false", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
     for filePath in fileArray:
         print ()
@@ -429,12 +430,15 @@ def ownQuant(data):
                     outputFile.write("%s\n" % row)                
         print ("DONE!")
     thisRegex = "OUT"
-    data["inputs"] = ["f", "start", "false", [inputDir], "localhost", [thisRegex]]
+    data["inputs"] = ["f", "start", "false", "false", [inputDir], "localhost", [thisRegex]]
     fileArray = getMatchContents(data)
 
     i = 0
     for filePath in fileArray:
-        outputPath = joinFolder([tempFolder,os.path.dirname(filePath),os.path.basename(filePath)[:3] + "graph.png"])
+        print ()
+        print ()
+        print ("START")
+        outputPath = joinFolder([tempFolder, os.path.dirname(filePath), os.path.basename(filePath)[:3], "graph.png"])
         inputPath = joinFolder([tempFolder, filePath])
         commandString = "gnuplot -e \"filename='" + inputPath+"'\" -e \"outputpath='" + outputPath+"'\" /home/adam/Projects/mullet/gnuplot.gp"
         data["inputs"] = [shlex.split(commandString)]

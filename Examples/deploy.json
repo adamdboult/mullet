@@ -4,12 +4,12 @@
     },
     {
 	"name": "getFolderContents",
-	"inputs": ["d" ["path", "keys"], "localhost", 1],
+	"inputs": ["d", ["path", "keys"], "localhost", 1],
 	"loop": "user",
 	"response" :[
 	    {
 		"name": "getFolderContents",
-		"inputs": ["f", ["path", ["keys", "user", "gpg/gpgPublic/"], "localhost"]],
+		"inputs": ["f", ["path", "keys", "user", "gpg/gpgPublic/"], "localhost"],
 		"loop": "key",
 		"response": [
 		    {
@@ -66,13 +66,13 @@
 			]
 		    }
 		]
-	    }
+	    },
 	    {
 		"name": "moveFile",
 		"inputs": ["authorized_keys", ["localhost", "localhost"], ["tempFolder", ["/home/", "user", "/.ssh/"]], "user"]
 	    }
 	]
-    }.
+    },
     {
 	"name": "readFile",
 	"inputs": [["path", "install.txt"], 0, 0],
@@ -110,7 +110,7 @@
 	"response": [
 	    {
 		"name": "getFolderContents",
-		"inputs": ["d" ["path", "copy", "user"], "localhost", 1],
+		"inputs": ["d", ["path", "copy", "user"], "localhost", 1],
 		"loop": "code",
 		"response": [
 		    {

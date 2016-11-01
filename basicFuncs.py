@@ -83,11 +83,12 @@ def appendFile(data):
 ########
 def joinFolder(folders):
     filePath = "/"
+    print (folders)
     print ("JOINING")
     for path in folders:
         if isinstance(path, list):
             path = joinFolder(path)
-        if (path[0]=="/"):
+        if (path[0] == "/"):
             path = path[1:]
         filePath = os.path.join(filePath, path)
     return filePath
@@ -146,7 +147,7 @@ def runSys(data):
 #######################
 def getFolderContents(data):
     print ("get folder cont")
-
+    print (data["inputs"])
     fileOrFolder = data["inputs"][0]
     paths = data["inputs"][1]
     host = data["inputs"][2]
@@ -262,18 +263,30 @@ def moveFile(data):
 # User fix #
 ############
 def userFix(systemScript, user):
+    user = user.replace ("\n","")
+    print ()
+    print ()
+    print ("USER Fix!")
     userList = getUserList()
+    print (user)
     if (user == "root"):
+        print (1)
         systemScript = "sudo " + systemScript
         commandArray = shlex.split(systemScript)
     elif (user == getpass.getuser()):
+        print(2)
         commandArray = shlex.split(systemScript)        
     elif (user in userList):
+        print (3)
         systemScriptPre = "sudo su - " + user + " -c"
         commandArray = shlex.split(systemScriptPre)
         commandArray.append(systemScript)
     else:
+        print (4)
         commandArray = shlex.split(systemScript)
+    print ("fixed!")
+    print ()
+    print ()
     return commandArray
         
 #######################
@@ -283,10 +296,10 @@ def getMatchContents(data):
     print ("get match contents")
     
     fileOrFolder = data["inputs"][0]
-    whatMatch = data["inputs"][1]
-    anti = data["inputs"][2]
-    exact = data["inputs"][3]
-    paths = data["inputs"][4]
+    whatMatch = data["inputs"][1]# "start", "end", anything else is whole string
+    anti = data["inputs"][2]# if "true", flips it,only find those not matching
+    exact = data["inputs"][3]# if "true", look for only exact string, if not look for this in inside another string
+    paths = data["inputs"][4]# 
     host = data["inputs"][5]
     regexArray = data["inputs"][6]
     

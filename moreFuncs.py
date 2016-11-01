@@ -3,6 +3,7 @@
 ##########
 import os
 import socket
+import sys
 
 import urllib.request
 
@@ -435,12 +436,17 @@ def ownQuant(data):
 
     i = 0
     for filePath in fileArray:
-        print ()
-        print ()
-        print ("START")
-        outputPath = joinFolder([tempFolder, os.path.dirname(filePath), os.path.basename(filePath)[:3], "graph.png"])
+        outputPath = joinFolder([tempFolder, os.path.dirname(filePath), os.path.basename(filePath)[:3] + "graph.png"])
         inputPath = joinFolder([tempFolder, filePath])
+        print ("!")
+        print (inputPath)
+        print (outputPath)
         commandString = "gnuplot -e \"filename='" + inputPath+"'\" -e \"outputpath='" + outputPath+"'\" /home/adam/Projects/mullet/gnuplot.gp"
+        #commandArray = ['gnuplot -e \"filename=' + inputPath + '\" -e \"outputpath=' + outputPath + '\" /home/adam/Projects/mullet/gnuplot.gp']
+        #print (commandArray)
+        #sys.exit()
+        #commandArray = ["gnuplot", "-e \"filename='" + inputPath+"'",  "-e \"outputpath='" + outputPath, "/home/adam/Projects/mullet/gnuplot.gp"]
         data["inputs"] = [shlex.split(commandString)]
+        #data["inputs"] = [commandArray]
         runSys(data)
-        i+=1
+        i += 1

@@ -83,13 +83,12 @@ def appendFile(data):
 ########
 def joinFolder(folders):
     filePath = "/"
-    print (folders)
-    print ("JOINING")
     for path in folders:
         if isinstance(path, list):
             path = joinFolder(path)
-        if (path[0] == "/"):
-            path = path[1:]
+        if (len(path) > 0):
+            if (path[0] == "/"):
+                path = path[1:]
         filePath = os.path.join(filePath, path)
     return filePath
     
@@ -264,29 +263,20 @@ def moveFile(data):
 ############
 def userFix(systemScript, user):
     user = user.replace ("\n","")
-    print ()
-    print ()
-    print ("USER Fix!")
     userList = getUserList()
     print (user)
     if (user == "root"):
-        print (1)
         systemScript = "sudo " + systemScript
         commandArray = shlex.split(systemScript)
     elif (user == getpass.getuser()):
-        print(2)
         commandArray = shlex.split(systemScript)        
     elif (user in userList):
-        print (3)
         systemScriptPre = "sudo su - " + user + " -c"
         commandArray = shlex.split(systemScriptPre)
         commandArray.append(systemScript)
     else:
-        print (4)
         commandArray = shlex.split(systemScript)
-    print ("fixed!")
-    print ()
-    print ()
+
     return commandArray
         
 #######################

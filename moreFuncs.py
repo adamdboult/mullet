@@ -161,11 +161,12 @@ def download(data):
         try:
             urllib.request.urlretrieve(URL, destName)
             mode = "644"
-            systemScript = 'chown ' + user + ":" + user + " " + destName
+            
+            systemScript = 'chown "' + user + ':' + user + '" "' + destName + '"'
             commandArray = userFix(systemScript, user)
             data["inputs"] = [commandArray]
             runSys(data)
-            systemScript = 'chmod ' + mode + " " + destName
+            systemScript = 'chmod ' + mode + ' "' + destName + '"'
             commandArray = userFix(systemScript, user)
             data["inputs"] = [commandArray]
             runSys(data)

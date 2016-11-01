@@ -145,7 +145,7 @@ def download(data):
         print ("NEW")
         print ("A: " + download)
         download = download.split("\t")
-        if (len(download > 1)):
+        if (len(download) > 1):
             URL = download[0].replace("\n", "")
             sourceArray = URL.split("/")
             filename = sourceArray[len(sourceArray) - 1]

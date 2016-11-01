@@ -111,6 +111,9 @@ def gitClone(data):
         print ()
         print ("NEW")
         print (git)
+        skip = False
+        if (len(git) > 1):
+            skip= True
         git = git.split("\t")
         URL = git[0].replace("\n", "")
         user= git[2]
@@ -127,7 +130,8 @@ def gitClone(data):
         commandArray = userFix(commandString, user)
         print ("DB: ", commandArray)
         data["inputs"] = [commandArray]
-        runSys(data)
+        if (skip == False):
+            runSys(data)
         print ("done this")
     print ("DONE ALL")
 

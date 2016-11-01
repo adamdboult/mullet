@@ -53,11 +53,11 @@
 	    {
 		"name": "getFolderContents",
 		"inputs": ["f", ["path", "keys", "user", "ssh/authorizedKeys"], "localhost"],
-		"loop": "result",
+		"loop": "key",
 		"response": [
 	            {
 			"name": "readFile",
-			"inputs": [["path", "keys", "user", "ssh/authorizedKeys/","loop"], 0, 0],
+			"inputs": [["path", "keys", "user", "ssh/authorizedKeys/","key"], 0, 0],
 			"response": [
 			    {
 				"name":"appendFile",

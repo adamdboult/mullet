@@ -111,26 +111,23 @@ def gitClone(data):
         print ()
         print ("NEW")
         print (git)
-        skip = False
-        if (len(git) > 1):
-            skip= True
         git = git.split("\t")
-        URL = git[0].replace("\n", "")
-        user= git[2]
-        print ("B: " + URL)
-        sourceArray = URL.split("/")
-        filename = sourceArray[len(sourceArray) - 1]
-        filename = filename.split(".")[0]
-        
-        destName = os.path.join(git[1], filename)
-        commandString = "git clone " + URL + " " + destName
-        print ("C: " + destName)
-        print ("DA: " + commandString)
-        userList = getUserList()
-        commandArray = userFix(commandString, user)
-        print ("DB: ", commandArray)
-        data["inputs"] = [commandArray]
-        if (skip == False):
+        if (len(git) > 1):
+            URL = git[0].replace("\n", "")
+            user = git[2]
+            print ("B: " + URL)
+            sourceArray = URL.split("/")
+            filename = sourceArray[len(sourceArray) - 1]
+            filename = filename.split(".")[0]
+            
+            destName = os.path.join(git[1], filename)
+            commandString = "git clone " + URL + " " + destName
+            print ("C: " + destName)
+            print ("DA: " + commandString)
+            userList = getUserList()
+            commandArray = userFix(commandString, user)
+            print ("DB: ", commandArray)
+            data["inputs"] = [commandArray]
             runSys(data)
         print ("done this")
     print ("DONE ALL")

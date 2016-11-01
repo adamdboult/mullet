@@ -145,33 +145,31 @@ def download(data):
         print ("NEW")
         print ("A: " + download)
         download = download.split("\t")
-        URL = download[0].replace("\n", "")
-        sourceArray = URL.split("/")
-        filename = sourceArray[len(sourceArray) - 1]
-        destName = os.path.join(download[1], filename)
-        user = download[2]
-        print ("B: " + URL)
-        print ("C: " + destName)
-        print (os.path.dirname(destName))
-        systemScript = "mkdir -p " + escapeString(os.path.dirname(destName))
-        commandArray = userFix(systemScript, user)
-        data["inputs"]=[commandArray]
-        runSys(data)
-
-        try:
-            urllib.request.urlretrieve(URL, destName)
-            mode = "644"
+        if (len(download > 1)):
+            URL = download[0].replace("\n", "")
+            sourceArray = URL.split("/")
+            filename = sourceArray[len(sourceArray) - 1]
+            destName = os.path.join(download[1], filename)
+            user = download[2]
+            systemScript = "mkdir -p " + escapeString(os.path.dirname(destName))
+            commandArray = userFix(systemScript, user)
+            data["inputs"]=[commandArray]
+            runSys(data)
             
-            systemScript = 'chown "' + user + ':' + user + '" "' + destName + '"'
-            commandArray = userFix(systemScript, user)
-            data["inputs"] = [commandArray]
-            runSys(data)
-            systemScript = 'chmod ' + mode + ' "' + destName + '"'
-            commandArray = userFix(systemScript, user)
-            data["inputs"] = [commandArray]
-            runSys(data)
-        except:
-            print ("Couldn't download", URL)
+            try:
+                urllib.request.urlretrieve(URL, destName)
+                mode = "644"
+            
+                systemScript = 'chown "' + user + ':' + user + '" "' + destName + '"'
+                commandArray = userFix(systemScript, user)
+                data["inputs"] = [commandArray]
+                runSys(data)
+                systemScript = 'chmod ' + mode + ' "' + destName + '"'
+                commandArray = userFix(systemScript, user)
+                data["inputs"] = [commandArray]
+                runSys(data)
+            except:
+                print ("Couldn't download", URL)
 
         print ("done this")
     print ("DONE ALL")

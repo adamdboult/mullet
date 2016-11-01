@@ -248,12 +248,12 @@ def moveFile(data):
 
     # change owner
     if (user != "false"):
-        systemScript = 'chown ' + user + ":" + user + " " + destString
+        systemScript = 'chown "' + user + ":" + user + '" "' + destString + '"'
         commandArray = userFix(systemScript, user)
         data["inputs"]=[commandArray]
         runSys(data)
 
-        systemScript = 'chmod ' + mode + " " + destString
+        systemScript = 'chmod ' + mode + ' "' + destString + '"'
         commandArray = userFix(systemScript, user)
         data["inputs"]=[commandArray]
         runSys(data)

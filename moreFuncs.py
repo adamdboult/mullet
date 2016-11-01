@@ -112,6 +112,7 @@ def gitClone(data):
         print ("NEW")
         print (git)
         git = git.split("\t")
+        print (git)
         if (len(git) > 1):
             URL = git[0].replace("\n", "")
             user = git[2]

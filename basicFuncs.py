@@ -201,7 +201,6 @@ def moveFile(data):
     hosts = data["inputs"][1]
     folders = data["inputs"][2]
 
-
     mode = "755"
     user = "false"
     if (len(data["inputs"]) > 3):
@@ -241,22 +240,33 @@ def moveFile(data):
         data["inputs"]=[commandArray]
         runSys(data)
 
+    if (destHost == "localhost"):
+        tempPath = joinFolder([data["tempFolder"], sourceFile])
+        tempString = '"' + tempPath + '"'
+        systemScript = 'rsync -az --protect-args '+ fromString + ' ' + tempString
+        commandArray = userFix(systemScript, user)
+        data["inputs"] = [commandArray]
+        runSys(data)
+        fromString = tempString
+
+        # change owner
+        if (user != "false"):
+            systemScript = 'chown "' + user + ":" + user + '" "' + tempString + '"'
+            commandArray = userFix(systemScript, user)
+            data["inputs"]=[commandArray]
+            runSys(data)
+
+            systemScript = 'chmod ' + mode + ' "' + tempString + '"'
+            commandArray = userFix(systemScript, user)
+            data["inputs"]=[commandArray]
+            runSys(data)
+
+        
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
     commandArray = userFix(systemScript, user)
     data["inputs"]=[commandArray]
     runSys(data)
 
-    # change owner
-    if (user != "false"):
-        systemScript = 'chown "' + user + ":" + user + '" "' + destString + '"'
-        commandArray = userFix(systemScript, user)
-        data["inputs"]=[commandArray]
-        runSys(data)
-
-        systemScript = 'chmod ' + mode + ' "' + destString + '"'
-        commandArray = userFix(systemScript, user)
-        data["inputs"]=[commandArray]
-        runSys(data)
 
 ############
 # User fix #

@@ -10,6 +10,8 @@ import urllib.request
 import zipfile
 import tarfile
 import shlex
+import rarfile
+import libarchive
 
 import datetime
 from operator import itemgetter
@@ -27,6 +29,7 @@ def unZip(data):
     
     outpath = os.path.splitext(filePath)[0]
     #outpath = joinFolder(os.path.dirname(filePath), os.path.basename(filePath))
+    folderPath = os.path.dirname(filePath)
     
     if (filePath.endswith(".zip")):
         fh = open(filePath, 'rb')
@@ -45,6 +48,24 @@ def unZip(data):
         tar.extractall(outpath)
         tar.close()
         
+    elif (filePath.endswith(".rar")):
+        print ("at this")
+        with rarfile.RarFile(filePath) as opened_rar:
+            opened_rar.extractall(folderPath)
+        #for f in rf.infolist():
+        #    
+        #tar =  tarfile.open(filePath, "r:")
+        #tar.extractall(outpath)
+        #tar.close()
+
+    elif (filePath.endswith(".7z")):
+        cwd = os.getcwd()
+        print ("at7z")
+        
+        os.chdir(folderPath)
+        libarchive.extract_file(filePath)
+        os.chdir(cwd)
+
     else:
         pass
 

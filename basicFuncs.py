@@ -218,7 +218,9 @@ def moveFile(data):
     
     fromPath = joinFolder([fromFold, sourceFile])
     destPath = joinFolder([destFold, sourceFile])
-
+    
+    #tempPath = joinFolder([data["tempFolder"], sourceFile])
+    
     destString = '"' + destPath + '"'
     fromString = '"' + fromPath + '"'
     
@@ -240,32 +242,37 @@ def moveFile(data):
         data["inputs"]=[commandArray]
         runSys(data)
 
-    if (destHost == "localhost"):
-        tempPath = joinFolder([data["tempFolder"], sourceFile])
-        tempString = '"' + tempPath + '"'
-        systemScript = 'rsync -az --protect-args '+ fromString + ' ' + tempString
-        commandArray = userFix(systemScript, user)
-        data["inputs"] = [commandArray]
-        runSys(data)
-        fromString = tempString
+    #if (destHost == "localhost"):
 
-        # change owner
-        if (user != "false"):
-            systemScript = 'chown "' + user + ":" + user + '" "' + tempString + '"'
-            commandArray = userFix(systemScript, user)
-            data["inputs"]=[commandArray]
-            runSys(data)
-
-            systemScript = 'chmod ' + mode + ' "' + tempString + '"'
-            commandArray = userFix(systemScript, user)
-            data["inputs"]=[commandArray]
-            runSys(data)
-
-        
+    #destString = '"' + tempPath + '"'
     systemScript = 'rsync -az --protect-args '+ fromString + ' ' + destString
     commandArray = userFix(systemScript, user)
-    data["inputs"]=[commandArray]
+    data["inputs"] = [commandArray]
+    print (4)
     runSys(data)
+    print (5)
+    #fromString = tempString
+
+    # change owner
+    if (user != "false"):
+        systemScript = 'chown "' + user + ":" + user + '" "' + tempString + '"'
+        commandArray = userFix(systemScript, user)
+        data["inputs"]=[commandArray]
+        runSys(data)
+        
+        systemScript = 'chmod ' + mode + ' "' + tempString + '"'
+        commandArray = userFix(systemScript, user)
+        data["inputs"]=[commandArray]
+        runSys(data)
+        
+    #else:
+    #    systemScript = 'rsync -az --protect-args ' + fromString + ' ' + destString
+    #    commandArray = userFix(systemScript, user)
+    #    data["inputs"]=[commandArray]
+    #    print (9)
+    #    runSys(data)
+
+    #print (10)
 
 
 ############

@@ -37,6 +37,10 @@ import getpass
 ########
 dir = os.path.dirname(os.path.realpath(__file__))
 
+userList = []
+for p in pwd.getpwall():
+    userList.append(p[0])
+
 ########
 # Keys #
 ########
@@ -126,12 +130,12 @@ def importGPGPub(data):
     }
 """
 
-path = "/home/adam/ownCloud/PC/mullet/laptop"
+mulletInputPath = "/home/adam/ownCloud/PC/mullet/laptop"
 
 ###########
 # Install #
 ###########
-installPath = os.path.join(path, "install.txt")
+installPath = os.path.join(mulletInputPath, "install.txt")
 
 with open(installPath) as infile:
     for program in infile:
@@ -166,11 +170,7 @@ with open(installPath) as infile:
 # Git #
 #######
 print()
-gitPath = os.path.join(path, "git.txt")
-
-userList = []
-for p in pwd.getpwall():
-    userList.append(p[0])
+gitPath = os.path.join(mulletInputPath, "git.txt")
 
 with open(gitPath) as infile:
     for row in infile:
@@ -217,6 +217,52 @@ with open(gitPath) as infile:
 ############
 # Download #
 ############
+print()
+downloadPath = os.path.join(mulletInputPath, "download.txt")
+
+with open(downloadPath) as infile:
+    for row in infile:
+
+        row = row.replace("\n","")
+        row = row.split("\t")
+
+        if len(row) > 1:
+
+            URL = row[0]
+            path = row[1]
+            user = row[2]
+
+            URL = URL.replace("\n", "")
+            path = path.replace("\n", "")
+            user = user.replace ("\n", "")
+
+            filename = URL.split("/")[len(URL.split("/")) - 1]
+            destName = os.path.join(path, filename)
+
+            systemScript = "wget " + URL + " " + destName
+
+            #print (destName)
+            print ()
+            if os.path.exists(destName) == False:
+                print ("Need to download")
+                print (systemScript)
+                #os.system(systemScript)
+
+                """
+                if (user == "root"):
+                systemScript = "sudo " + systemScript
+                elif (user == getpass.getuser()):
+                
+                elif (user in userList):
+                systemScriptPre = "sudo su - " + user + " -c " + systemScript
+                commandArray.append(commandString)
+                else:
+                commandArray = shlex.split(systemScript)
+                """
+            else:
+                print (filename + " already exists")
+
+
 """
     {
 	"name": "readFile",

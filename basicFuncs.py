@@ -1,24 +1,3 @@
-##########
-# Import #
-##########
-import os
-import re
-import subprocess
-
-import shlex
-import tempfile
-import shutil
-import copy
-import pwd
-
-import getpass
-
-#########
-# Print #
-#########
-def printF(data):
-    print (data["inputs"])
-
 #############
 # Read file #
 #############
@@ -182,14 +161,7 @@ def getFolderContents(data):
             resultOutput.append(newA)
     return resultOutput
 
-#################
-# Get user list #
-#################
-def getUserList():
-    arr = []
-    for p in pwd.getpwall():
-        arr.append(p[0])
-    return arr
+
 
 #############
 # Move file #

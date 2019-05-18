@@ -41,96 +41,93 @@ userList = []
 for p in pwd.getpwall():
     userList.append(p[0])
 
+mulletInputPath = "/home/adam/ownCloud/PC/mullet/laptop"
+    
 ########
 # Keys #
 ########
-"""
-def importGPGPub(data):
-    print ("IMPORT")
-    user = data["inputs"][0]
-    print ("path is:")
-    keyPath = joinFolder(data["inputs"][1])
-    print (keyPath)
-    commandString = "gpg --import " + keyPath
-    commandArray = userFix(commandString, user)
-    data["inputs"]=[commandArray]
-    runSys(data)
+keyPath = os.path.join(mulletInputPath, "keys")
+keyUsers = os.listdir(keyPath)
+for keyUser in keyUsers:
+    print ()
+    print (keyUser)
+
+    ###
+    # GPG keys
+    ###
+    print ("Importing GPG keys")
+    gpgKeyPath = os.path.join(keyPath, keyUser, "gpg", "gpgKeys")
+    gpgKeys = os.listdir(gpgKeyPath)
+
+    for gpgKey in gpgKeys:
+        gpgKeyFile = os.path.join(gpgKeyPath, gpgKey)
+
+        commandString = "gpg --import " + gpgKeyFile
+        print (commandString)
+        os.system(commandString)
+
+    ###
+    # GPG Public keys
+    ###
+    print ("Importing GPG public keys")
+    gpgPublicPath = os.path.join(keyPath, keyUser, "gpg", "gpgPublic")
+    gpgPublicKeys = os.listdir(gpgPublicPath)
+
+    for gpgPublicKey in gpgPublicKeys:
+        gpgPublicKeyFile = os.path.join(gpgPublicPath, gpgPublicKey)
+        commandString = "gpg --import " + gpgPublicKeyFile
+        os.system(commandString)
+        print (commandString)
+
+    ###
+    # Authorised keys
+    ###
+    print ("Importing authorised keys")
+    
+    authorisedKeysPath = os.path.join(keyPath, keyUser, "ssh", "authorizedKeys")
+    authorisedKeys = os.listdir(authorisedKeysPath)
+    
+    j = 0
+
+    for authorisedKey in authorisedKeys:
+        if j == 0:
+            commandString = "rm /home/" + keyUser + "/.ssh/authorized_keys"
+            os.system(commandString)
+            print (commandString)
 
 
-    {
-	"name": "getFolderContents",
-	"inputs": ["d", ["path", "keys"], "localhost", 1],
-	"loop": "user",
-	"response" :[
-	    {
-		"name": "getFolderContents",
-		"inputs": ["f", ["path", "keys", "user", "gpg/gpgPublic/"], "localhost"],
-		"loop": "key",
-		"response": [
-		    {
-			"name": "importGPGPub",
-			"inputs": ["user", ["path", "keys", "user", "gpg/gpgPublic/", "key"]]
-		    }
-		]
-	    },
-	    {
-		"name": "getFolderContents",
-		"inputs": ["f", ["path", "keys", "user", "gpg/gpgKeys/"], "localhost"],
-		"loop": "key",
-		"response": [
-		    {
-			"name": "importGPGPub",
-			"inputs": ["user", ["path", "keys", "user", "gpg/gpgKeys/", "key"]]
-		    }
-		]
-	    },
-	    {
-		"name": "getFolderContents",
-		"inputs": ["f", ["path", "keys", "user", "ssh/knownHosts"], "localhost"],
-		"loop": "key",
-		"response": [
-	            {
-			"name": "readFile",
-			"inputs": [["path", "keys", "user", "ssh/knownHosts/", "key"], 0, 0],
-			"response": [
-			    {
-				"name": "appendFile",
-				"inputs": ["result", ["tempFolder", "known_hosts"]]
-			    }
-			]
-		    }
-		]
-	    },
-	    {
-		"name": "moveFile",
-		"inputs": ["known_hosts", ["localhost", "localhost"], ["tempFolder", ["/home/", "user", "/.ssh/"]], "user"]
-	    },
-	    {
-		"name": "getFolderContents",
-		"inputs": ["f", ["path", "keys", "user", "ssh/authorizedKeys"], "localhost"],
-		"loop": "key",
-		"response": [
-	            {
-			"name": "readFile",
-			"inputs": [["path", "keys", "user", "ssh/authorizedKeys/","key"], 0, 0],
-			"response": [
-			    {
-				"name":"appendFile",
-				"inputs": ["result", ["tempFolder", "authorized_keys"]]
-			    }
-			]
-		    }
-		]
-	    },
-	    {
-		"name": "moveFile",
-		"inputs": ["authorized_keys", ["localhost", "localhost"], ["tempFolder", ["/home/", "user", "/.ssh/"]], "user"]
-	    }
-	]
-    }
-"""
 
-mulletInputPath = "/home/adam/ownCloud/PC/mullet/laptop"
+        authorisedKeyFile = os.path.join(authorisedKeysPath, authorisedKey)
+        destPath = os.path.join("/", "home", keyUser, ".ssh", "authorized_keys")
+        commandString = "cat " + authorisedKeyFile + " >> " + destPath
+        os.system(commandString)
+        print (commandString)
+
+        j = 1
+
+
+    ###
+    # Known hosts
+    ###
+    print ("Importing known hosts")
+    
+    knownHostPath = os.path.join(keyPath, keyUser, "ssh", "knownHosts")
+    knownHosts = os.listdir(knownHostPath)
+
+    j = 0
+    for knownHost in knownHosts:
+        if j == 0:
+            commandString = "rm /home/" + keyUser + "/.ssh/known_hosts"
+            os.system(commandString)
+            print (commandString)
+
+        knownHostFile = os.path.join(knownHostPath, knownHost)
+        destPath = os.path.join("/", "home", keyUser, ".ssh", "known_hosts")
+        commandString = "cat " + knownHostFile + " >> " + destPath
+        os.system(commandString)
+        print (commandString)
+
+        j = 1
 
 ###########
 # Install #
@@ -190,14 +187,15 @@ with open(gitPath) as infile:
 
             filename = URL.split("/")[len(URL.split("/")) - 1].split(".")[0]
             destName = os.path.join(path, filename)
-
-            systemScript = "git clone " + URL + " " + destName
+            print(destName)
+            systemScript = "git clone " + URL + " '" + destName + "'"
+            print (systemScript)
 
 
             #print (destName)
             if os.path.isdir(destName) == False:
                 print ("Need to clone")
-                print (systemScript)
+
                 os.system(systemScript)
 
                 """
@@ -220,6 +218,8 @@ with open(gitPath) as infile:
 print()
 downloadPath = os.path.join(mulletInputPath, "download.txt")
 
+
+
 with open(downloadPath) as infile:
     for row in infile:
 
@@ -239,14 +239,14 @@ with open(downloadPath) as infile:
             filename = URL.split("/")[len(URL.split("/")) - 1]
             destName = os.path.join(path, filename)
 
-            systemScript = "wget " + URL + " " + destName
+            systemScript = "wget " + URL + " -O " + destName
 
             #print (destName)
             print ()
             if os.path.exists(destName) == False:
                 print ("Need to download")
                 print (systemScript)
-                #os.system(systemScript)
+                os.system(systemScript)
 
                 """
                 if (user == "root"):
@@ -260,49 +260,31 @@ with open(downloadPath) as infile:
                 commandArray = shlex.split(systemScript)
                 """
             else:
-                print (filename + " already exists")
+                print (filename + " already exists in " + path)
 
-
-"""
-    {
-	"name": "readFile",
-	"inputs": [["path", "download.txt"], 0, 0],
-	"response": [
-	    {
-		"name": "download",
-		"inputs": ["result"]
-	    }
-	]
-    },
-"""
 ##############
 # Copy files #
 ##############
-"""
-    {
-	"name": "getFolderContents",
-	"inputs": ["d", ["path", "copy"], "localhost", 1],
-	"loop": "user",
-	"response": [
-	    {
-		"name": "getFolderContents",
-		"inputs": ["d", ["path", "copy", "user"], "localhost", 1],
-		"loop": "code",
-		"response": [
-		    {
-			"name": "getFolderContents",
-			"inputs": ["f", ["path", "copy", "user", "code"], "localhost"],
-			"loop": "file",
-			"response": [
-			    {
-				"name": "moveFile",
-				"inputs": ["file", ["localhost", "localhost"], [["path", "copy", "user", "code"], "/"], "user", "code"]
-			    }
-			]
-		    }
-		]
-	    }
-	]
-    }
-"""
+print()
+print ("Copying")
+copyPath = os.path.join(mulletInputPath, "copy")
 
+copyUsers = os.listdir(copyPath)
+
+for copyUser in copyUsers:
+    #print(copyUser)
+    copyUserPath = os.path.join(copyPath, copyUser)
+    copyPermissions = os.listdir(copyUserPath)
+    for copyPermission in copyPermissions:
+        print ()
+        print (copyUser + ", " + copyPermission)
+        copyPermissionPath = os.path.join(copyUserPath, copyPermission)
+        for (dirpath, dirnames, filenames) in os.walk(copyPermissionPath):
+            #print (dirnames)
+            for f in filenames:
+                sourcePath = os.path.join(dirpath, f)
+                destPath = os.path.join(dirpath.replace(copyPermissionPath, ""), f)
+                if os.path.exists(destPath) == False:
+                    commandString = "cp '" + sourcePath + "' '" + destPath + "'"
+                    print (commandString)
+                    os.system(commandString)

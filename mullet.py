@@ -16,12 +16,12 @@ import zipfile
 import tarfile
 import shlex
 #import rarfile
-import libarchive
+#import libarchive
 
-import datetime
-from operator import itemgetter
+#import datetime
+#from operator import itemgetter
 
-import csv
+#import csv
 
 import re
 import subprocess

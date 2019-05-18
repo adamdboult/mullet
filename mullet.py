@@ -41,7 +41,9 @@ userList = []
 for p in pwd.getpwall():
     userList.append(p[0])
 
-mulletInputPath = "/home/adam/ownCloud/PC/mullet/laptop"
+args = sys.argv
+mulletInputPath = args[1]
+#mulletInputPath = "/home/adam/ownCloud/PC/mullet/laptop"
     
 ########
 # Keys #

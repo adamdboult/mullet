@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 import tarfile
 import shlex
-import rarfile
+#import rarfile
 import libarchive
 
 import datetime

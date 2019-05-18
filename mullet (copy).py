@@ -95,8 +95,6 @@ for keyUser in keyUsers:
             os.system(commandString)
             print (commandString)
 
-
-
         authorisedKeyFile = os.path.join(authorisedKeysPath, authorisedKey)
         destPath = os.path.join("/", "home", keyUser, ".ssh", "authorized_keys")
         commandString = "cat " + authorisedKeyFile + " >> " + destPath
@@ -104,7 +102,6 @@ for keyUser in keyUsers:
         print (commandString)
 
         j = 1
-
 
     ###
     # Known hosts

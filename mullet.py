@@ -93,9 +93,11 @@ for keyUser in keyUsers:
 
     for authorisedKey in authorisedKeys:
         if j == 0:
-            commandString = "rm /home/" + keyUser + "/.ssh/authorized_keys"
-            os.system(commandString)
-            print (commandString)
+            destPath = "/home/" + keyUser + "/.ssh/authorized_keys"
+            if os.path.exists(destPath) == True:
+                commandString = "rm " + destPath
+                os.system(commandString)
+                print (commandString)
 
         authorisedKeyFile = os.path.join(authorisedKeysPath, authorisedKey)
         destPath = os.path.join("/", "home", keyUser, ".ssh", "authorized_keys")
@@ -116,9 +118,11 @@ for keyUser in keyUsers:
     j = 0
     for knownHost in knownHosts:
         if j == 0:
-            commandString = "rm /home/" + keyUser + "/.ssh/known_hosts"
-            os.system(commandString)
-            print (commandString)
+            destPath = "/home/" + keyUser + "/.ssh/known_hosts"
+            if os.path.exists(destPath) == True:
+                commandString = "rm " + destPath
+                os.system(commandString)
+                print (commandString)
 
         knownHostFile = os.path.join(knownHostPath, knownHost)
         destPath = os.path.join("/", "home", keyUser, ".ssh", "known_hosts")
@@ -282,6 +286,49 @@ for copyUser in copyUsers:
                 sourcePath = os.path.join(dirpath, f)
                 destPath = os.path.join(dirpath.replace(copyPermissionPath, ""), f)
                 if os.path.exists(destPath) == False:
-                    commandString = "cp '" + sourcePath + "' '" + destPath + "'"
+
+                    #tempPath = tempfile.mkdtemp()
+                    #print ("temp path is:")
+                    #print (tempPath)
+
+                    #tempDestPath = os.path.join(tempPath, f)
+                    #print (tempDestPath)
+
+
+                    ###
+                    # Move to temp
+                    ###
+                    #commandString = "cp '" + sourcePath + "' '" + tempDestPath + "'"
+                    #print (commandString)
+                    #os.system(commandString)
+
+                    ###
+                    # Move to final
+                    ###
+                    commandString = "sudo cp '" + sourcePath + "' '" + destPath + "'"
                     print (commandString)
                     os.system(commandString)
+
+
+                    ###
+                    # Change owner
+                    ###
+                    #if copyUser == "root":
+                    commandString = "sudo chown " + copyUser + ":" + copyUser + " '" + destPath + "'"
+                    #else:
+                    #    commandString = "chown " + copyUser + " '" + tempDestPath + "'"
+                    print (commandString)
+                    os.system(commandString)
+
+                    ###
+                    # Change permission
+                    ###
+                    commandString = "sudo chmod " + copyPermission + " '" + destPath + "'"
+                    print (commandString)
+                    os.system(commandString)
+                    
+
+                    ###
+                    # Close temp folder
+                    ###
+                    #shutil.rmtree(tempPath)
